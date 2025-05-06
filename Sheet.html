@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Louverture Galaxy Roadmap</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* General Styling */
+        body {
+            margin: 0;
+            font-family: 'Orbitron', sans-serif;
+            color: #ff6f00; /* Burnt orange color */
+            line-height: 1.6;
+            background-image: url('https://images.wallpapersden.com/image/download/black-hole-hd-art_bWZmbGyUmZqaraWkpJRobWllrWdma2U.jpg'); /* Updated black hole background image */
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
+        h1, h2, h3 {
+            text-align: center;
+        }
+        h1 {
+            font-size: 2.5rem;
+            color: #ff6f00; /* Burnt orange for the main title */
+            margin-top: 20px;
+        }
+        h2 {
+            font-size: 2rem;
+            color: #ff8c1a; /* Slightly lighter burnt orange */
+        }
+        h3 {
+            color: #ffb84d; /* Lighter burnt orange for subheadings */
+        }
+        p {
+            text-align: center;
+            max-width: 800px;
+            margin: 10px auto;
+            font-size: 1rem;
+        }
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px 0;
+            background-color: rgba(0, 0, 0, 0.6); /* Semi-transparent black background */
+        }
+
+        /* Roadmap Section */
+        .roadmap {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+            gap: 20px;
+        }
+        .roadmap-phase {
+            background: rgba(0, 0, 0, 0.7); /* Transparent black background */
+            border: 2px solid #ff6f00; /* Burnt orange border */
+            border-radius: 15px; /* Rounded corners */
+            box-shadow: 0 4px 10px rgba(255, 111, 0, 0.3); /* Burnt orange shadow */
+            padding: 20px;
+            width: calc(33% - 20px);
+            box-sizing: border-box;
+            text-align: center;
+            transition: transform 0.3s ease-in-out;
+            cursor: pointer; /* Cursor pointer to indicate clickability */
+        }
+        .roadmap-phase:hover {
+            transform: translateY(-10px);
+        }
+        .roadmap-phase h3 {
+            margin-top: 10px;
+            font-size: 1.4rem;
+            text-transform: uppercase;
+            color: #ffb84d; /* Lighter burnt orange */
+        }
+        .roadmap-phase ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+            text-align: left;
+            font-size: 0.9rem;
+            color: #ffb84d; /* Lighter burnt orange for list items */
+        }
+        .roadmap-phase li {
+            margin: 10px 0;
+        }
+
+        /* Slot Machine Styling */
+        #game-container {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+            margin-top: 50px;
+        }
+        #slot {
+            width: 500px;
+            height: 500px;
+            margin: 20px;
+            font-size: 240px;
+            font-weight: bold;
+            line-height: 500px;
+            text-align: center;
+            border: 3px solid #333;
+            border-radius: 10px;
+            background-color: #f4f4f4;
+        }
+        #spin-button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #spin-button:hover {
+            background-color: #0056b3;
+        }
+        #result {
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        #legend {
+            margin-left: 40px;
+            text-align: left;
+        }
+        #legend h3 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        #legend ul {
+            list-style-type: none;
+            padding: 0;
+            font-size: 18px;
+        }
+        #legend li {
+            margin: 5px 0;
+        }
+
+        /* Footer */
+        footer {
+            margin-top: 50px; /* Adjusted for new content */
+            text-align: center;
+            font-size: 0.8rem;
+            color: #000; /* Default text color is black */
+            padding: 20px 0;
+            background-color: transparent; /* Footer background is fully transparent */
+            animation: pulseFooterText 7s infinite; /* Pulsating effect for footer text */
+        }
+
+        /* Pulsating Text Color Animation */
+        @keyframes pulseFooterText {
+            0% {
+                color: #000; /* Black */
+            }
+            50% {
+                color: #ff6f00; /* Burnt orange */
+            }
+            100% {
+                color: #000; /* Black */
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>SheeTy LaunchPad: Development Roadmap</h1>
+        <p>Explore the phases of development for SheeTHole, a blockchain-integrated space-themed game with P2E mechanics, NFTs, and tokenomics.</p>
+    </header>
+
+    <main class="container">
+        <!-- Roadmap -->
+        <section class="roadmap">
+            <div class="roadmap-phase" onclick="togglePhaseInfo(1)">
+                <h3>Phase 1: Design & Prototyping</h3>
+                <ul id="phase1-info" style="display: none;">
+                    <li>Game wireframe and mechanics design</li>
+                    <li>Deploy $SheeT tokens</li>
+                    <li>Develop a basic game prototype</li>
+                </ul>
+            </div>
+            <div class="roadmap-phase" onclick="togglePhaseInfo(2)">
+                <h3>Phase 2: X Wallet & Token Integration</h3>
+                <ul id="phase2-info" style="display: none;">
+                    <li>Wallet connection setup</li>
+                    <li>SheeTy Sagittarius A* Game test deployment</li>
+                    <li>Test in-game reward system</li>
+                </ul>
+            </div>
+            <div class="roadmap-phase" onclick="togglePhaseInfo(3)">
+                <h3>Phase 3: Gameplay & Tokenomics</h3>
+                <ul id="phase3-info" style="display: none;">
+                    <li>ICO Offering/Private Sell</li>
+                    <li>Polish Game Development</li>
+                    <li>Finalize $SheeT tokenomics</li>
+                </ul>
+            </div>
+            <div class="roadmap-phase" onclick="togglePhaseInfo(4)">
+                <h3>Phase 4: Testing & Deployment</h3>
+                <ul id="phase4-info" style="display: none;">
+                    <li>Beta testing with community feedback</li>
+                    <li>GAME LAUNCH!!</li>
+                    <li>Send 25% of $SheeT to the HOLE!</li>
+                </ul>
+            </div>
+            <div class="roadmap-phase" onclick="togglePhaseInfo(5)">
+                <h3>Phase 5: Marketing & Scaling</h3>
+                <ul id="phase5-info" style="display: none;">
+                    <li>Promote game in crypto gaming communities</li>
+                    <li>Reward community for playing!! Using @SimulacrumAI #simu #tip [amount] @Username on X!</li>
+                    <li>Add more SheeTy Holes & Expand Web3 game library</li>
+                </ul>
+            </div>
+        </section>
+<!-- Slot Machine -->
+<section id="slot-machine" style="background: transparent;">
+    <div id="game-container" style="transform: scale(1.2); display: flex; flex-direction: column; align-items: center;">
+        <div>
+            <div id="slot" style="
+                font-size: 5rem; 
+                height: 200px; 
+                width: 200px; 
+                display: flex; 
+                align-items: center; 
+                justify-content: center; 
+                border: 5px solid rgba(139, 69, 19, 1); 
+                border-radius: 15px; 
+                background: url('https://images.wallpapersden.com/image/download/black-hole-hd-art_bWZmbGyUmZqaraWkpJRobWllrWdma2U.jpg') center/cover no-repeat;">
+                <!-- Start image -->
+            </div>
+        </div>
+        <button id="spin-button" style="
+            padding: 0.8rem 2rem; 
+            margin-top: 1.5rem; 
+            font-size: 1.2rem; 
+            color: white; 
+            background-color: rgba(255, 69, 0, 0.3); 
+            border: 2px solid rgba(255, 69, 0, 0.5); 
+            border-radius: 10px; 
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(255, 69, 0, 0.4);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;">
+            Play
+        </button>
+        <button id="claim-button" style="
+            display: none;
+            padding: 0.8rem 2rem; 
+            margin-top: 1rem; 
+            font-size: 1.2rem; 
+            color: white; 
+            background: linear-gradient(90deg, #ffd700, #fffacd); 
+            border: 2px solid gold; 
+            border-radius: 10px; 
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(255, 215, 0, 0.6);
+            position: relative;
+            overflow: hidden;">
+            Claim NFT
+        </button>
+        <div id="result" style="margin-top: 1rem; font-size: 1.2rem; text-align: center;"></div>
+    </div>
+    <div id="legend" style="background: transparent; margin-top: 1rem; transform: scale(0.6);">
+        <h3>Legend</h3>
+        <ul style="list-style: none; padding: 0; text-align: center;">
+            <li>⭐ - Jackpot! (Winner)</li>
+            <li>💎 - Diamond Treasure! (Winner)</li>
+            <li>🍒 - Try Again (Loser)</li>
+            <li>🍋 - Try Again (Loser)</li>
+            <li>🍊 - Try Again (Loser)</li>
+            <li>🔔 - Try Again (Loser)</li>
+            <li>🎲 - Try Again (Loser)</li>
+        </ul>
+    </div>
+</section>
+
+<style>
+    @keyframes strobe-gold {
+        0%, 100% { border-color: rgba(255, 215, 0, 0.5); box-shadow: 0 0 10px rgba(255, 215, 0, 0.6); }
+        50% { border-color: rgba(255, 215, 0, 1); box-shadow: 0 0 20px rgba(255, 215, 0, 1); }
+    }
+
+    @keyframes strobe-red {
+        0%, 100% { border-color: rgba(255, 0, 0, 0.5); box-shadow: 0 0 10px rgba(255, 0, 0, 0.6); }
+        50% { border-color: rgba(255, 0, 0, 1); box-shadow: 0 0 20px rgba(255, 0, 0, 1); }
+    }
+
+    @keyframes breathe {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.2); }
+    }
+
+    #claim-button:hover {
+        background: linear-gradient(90deg, #fffacd, #ffd700);
+        animation: glitter 2s infinite;
+    }
+
+    @keyframes glitter {
+        0%, 100% { box-shadow: 0 0 10px rgba(255, 215, 0, 0.8); }
+        50% { box-shadow: 0 0 20px rgba(255, 215, 0, 1); }
+    }
+</style>
+
+<script>
+    const spinButton = document.getElementById('spin-button');
+    const claimButton = document.getElementById('claim-button');
+    const slot = document.getElementById('slot');
+    const result = document.getElementById('result');
+
+    const symbols = ['🍒', '🍋', '🍊', '⭐', '🔔', '🎲', '💎'];
+    let isSpinning = false;
+
+    function resetSlotBorder() {
+        slot.style.borderColor = 'rgba(139, 69, 19, 1)';
+        slot.style.boxShadow = 'none';
+        slot.style.animation = 'none';
+    }
+
+    function setStartingImage() {
+        slot.style.backgroundImage = "url('https://images.wallpapersden.com/image/download/black-hole-hd-art_bWZmbGyUmZqaraWkpJRobWllrWdma2U.jpg')";
+        slot.textContent = '';
+        slot.style.color = 'transparent';
+        resetSlotBorder();
+    }
+
+    function getRandomSymbol() {
+        const weightedSymbols = [
+            '🍒', '🍒', '🍒', '🍒', '🍒',
+            '🍋', '🍋', '🍋', '🍋', '🍋',
+            '🍊', '🍊', '🍊', '🍊', '🍊',
+            '🔔', '🔔', '🔔', '🔔', '🔔',
+            '🎲', '🎲', '🎲', '🎲', '🎲',
+            '⭐', '💎' // Winners have lower weight
+        ];
+        const randomIndex = Math.floor(Math.random() * weightedSymbols.length);
+        return weightedSymbols[randomIndex];
+    }
+
+    function determineResult(finalSymbol) {
+        const outcomes = {
+            '⭐': { message: '🎉 Jackpot! You win!', isWinner: true },
+            '💎': { message: '💎 Diamond Treasure! You win!', isWinner: true },
+            '🍒': { message: '😞 Try again!', isWinner: false },
+            '🍋': { message: '😞 Try again!', isWinner: false },
+            '🍊': { message: '😞 Try again!', isWinner: false },
+            '🔔': { message: '😞 Try again!', isWinner: false },
+            '🎲': { message: '😞 Try again!', isWinner: false }
+        };
+
+        const outcome = outcomes[finalSymbol];
+        result.textContent = outcome.message;
+	slot.textContent = finalSymbol;
+
+        if (outcome.isWinner) {
+            slot.style.borderColor = 'gold';
+            slot.style.animation = 'strobe-gold 1s infinite, breathe 2s infinite';
+            claimButton.style.display = 'block';
+        } else {
+            slot.style.borderColor = 'red';
+            slot.style.animation = 'strobe-red 1s infinite';
+            setTimeout(() => {
+                slot.style.borderColor = 'darkorange';
+                setStartingImage();
+            }, 10000); // Delay before showing the starting image
+        }
+    }
+
+    function spinSlotMachine() {
+        if (isSpinning) return;
+
+        isSpinning = true;
+        spinButton.disabled = true;
+        spinButton.style.opacity = 0.5;
+
+        claimButton.style.display = 'none';
+        result.textContent = '';
+        resetSlotBorder();
+
+        slot.style.color = '#fff';
+        slot.style.backgroundImage = ''; // Clear starting image
+
+        let spinCount = 0;
+        const maxSpins = 50; // Number of spins before stopping
+        const interval = setInterval(() => {
+            const currentSymbol = symbols[spinCount % symbols.length];
+            slot.textContent = currentSymbol;
+            spinCount++;
+
+            // Stop spinning after maxSpins
+            if (spinCount >= maxSpins) {
+                clearInterval(interval);
+                const randomSymbol = getRandomSymbol(); // Adjusted odds
+                determineResult(randomSymbol);
+                isSpinning = false;
+                spinButton.disabled = false;
+                spinButton.style.opacity = 1;
+            }
+        }, 50);
+    }
+
+    spinButton.addEventListener('click', spinSlotMachine);
+
+    setStartingImage(); // Initialize game with starting image
+</script>
+</body>
+</html>
