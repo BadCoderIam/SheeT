@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>SheeTY Abyss</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap');
+
+  @keyframes fadeIn {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+  }
+
+  @keyframes glowEffect {
+    0% {
+      text-shadow: 0 0 5px #ff6f00, 0 0 10px #ff6f00, 0 0 20px #ff6f00;
+    }
+    100% {
+      text-shadow: 0 0 10px #ffa500, 0 0 20px #ffa500, 0 0 30px #ffa500;
+    }
+  }
+
+  html, body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: url('background.gif') no-repeat center center fixed;
+  background-size: cover;
+  font-family: 'Orbitron', sans-serif;
+  color: #ff6f00;
+}
+
+  canvas {
+    display: block;
+  }
+
+  #startScreen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    color: #ff6f00;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+    animation: fadeIn 2s ease-in-out;
+    font-family: 'Orbitron', sans-serif;
+    text-align: center;
+  }
+
+    h1, h2 {
+      color: #ff9966;
+      text-shadow: 0 0 10px #ff9966;
+    }
+    button {
+      padding: 1em 2em;
+      margin-top: 1em;
+      font-size: 1.5em;
+      font-family: 'Orbitron', sans-serif;
+      background: linear-gradient(145deg, #ff9966, #cc5200);
+      color: white;
+      border: none;
+      border-radius: 0.5em;
+      cursor: pointer;
+      box-shadow: 0 0 10px #ff9966;
+      transition: transform 0.2s, background 0.3s;
+    }
+    button:hover {
+      transform: scale(1.05);
+      background: linear-gradient(145deg, #cc5200, #ff9966);
+    }
+    button:active {
+      transform: scale(0.98);
+    }
+
+  #startScreen h1 {
+    font-size: 3em;
+    animation: glowEffect 5s infinite alternate;
+  }
+
+  #startButton {
+  all: unset; /* Removes ALL browser default button styles */
+  display: inline-block;
+  padding: 1em 2em;
+  font-size: 1.2em;
+  margin-top: 1em;
+  background-color: rgba(255, 111, 0, 0.2); /* Burnt orange transparent */
+  color: #ff6f00;
+  border: 2px solid #ff6f00;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: center;
+  transition: background-color 0.3s, color 0.3s, box-shadow 0.3s;
+  font-family: 'Orbitron', sans-serif;
+  }
+
+  #startButton:hover {
+    background-color: #ff6f00;
+    color: black;
+    box-shadow: 0 0 15px #ff6f00;
+  }
+
+  #startButton:active {
+    transform: scale(0.98);
+  }
+
+  #scoreDisplay {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    color: #ff6f00;
+    font-size: 24px;
+    z-index: 5;
+    font-family: 'Orbitron', sans-serif;
+    text-shadow: 0 0 5px #ff6f00;
+  }
+</style>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap');
+
+#Button {
+  all: unset;
+  display: inline-block;
+  padding: 1em 2em;
+  font-size: 1.2em;
+  margin-top: 1em;
+  background-color: rgba(255, 111, 0, 0.2);
+  color: #ff6f00;
+  border: 2px solid #ff6f00;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: center;
+  transition: background-color 0.3s, color 0.3s, box-shadow 0.3s;
+  font-family: 'Orbitron', sans-serif;
+}
+
+#Button:hover {
+  background-color: #ff6f00;
+  color: black;
+  box-shadow: 0 0 15px #ff6f00;
+}
+
+#Button:active {
+  transform: scale(0.98);
+}
+
+#scoreDisplay {
+  font-family: 'Orbitron';
+  color: #ff6f00;
+  font-size: 24px;
+  text-shadow: 0 0 5px #ff6f00;
+}
+</style>
+</head>
+<body>
+<div id="startScreen">
+<h1>SheeTy Abyss</h1>
+<button id="startButton">Start SheeT</button>
+</div>
+<div id="scoreDisplay">Score: 0 | High Score: 0 | Level: 0 
+</div>
+<canvas id="gameCanvas"></canvas>
+<style>
+  body {
+    margin: 0;
+    overflow: hidden;
+    background: url('background.jpg') no-repeat center center fixed;
+    background-size: cover;
+    font-family: Arial, sans-serif;
+    color: white;
+  }
+
+  #startScreen {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    z-index: 10;
+  }
+
+  #startButton,
+#Button {
+  all: unset;
+  display: inline-block;
+  padding: 1em 2em;
+  font-size: 1.2em;
+  margin-top: 1em;
+  background-color: rgba(255, 111, 0, 0.2); /* Burnt orange transparent */
+  color: #ff6f00;
+  border: 2px solid #ff6f00;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: center;
+  transition: background-color 0.3s, color 0.3s, box-shadow 0.3s;
+  font-family: 'Orbitron', sans-serif;
+}
+
+#startButton:hover,
+#Button:hover {
+  background-color: #ff6f00;
+  color: black;
+  box-shadow: 0 0 15px #ff6f00;
+}
+
+#startButton:active,
+#Button:active {
+  transform: scale(0.98);
+} 
+
+button#restartButton,
+#restartButton {
+  all: unset;
+  display: inline-block;
+  padding: 1em 2em;
+  font-size: 1.2em;
+  margin-top: 1em;
+  background-color: rgba(255, 111, 0, 0.2); /* Burnt orange transparent */
+  color: #ff6f00;
+  border: 2px solid #ff6f00;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: center;
+  transition: background-color 0.3s, color 0.3s, box-shadow 0.3s;
+  font-family: 'Orbitron', sans-serif;
+}
+
+button#restartButton:hover,
+#restartButton:hover {
+  background-color: #ff6f00;
+  color: black;
+  box-shadow: 0 0 15px #ff6f00;
+}
+
+button#restartButton:active,
+#restartButton:active {
+  transform: scale(0.98);
+}
+</style>
+<script>
+
+  
+  // Load sounds
+  function createSound(src) {
+    const audio = new Audio(src);
+    return () => {
+      const sound = audio.cloneNode();
+      sound.play().catch(e => console.warn("Sound error:", e));
+    };
+  }
+
+  const playLaser = createSound('./sounds/sfx_laser1.ogg');
+  const playExplosion = createSound('./sounds/sfx_lose.ogg');
+  const playShieldDown = createSound('./sounds/sfx_shieldDown.ogg');
+    
+
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    
+let gameStarted = false;
+let gameOver = false;
+let playerHP = 4;
+let keys = {};
+let shakeTimer = 0;
+
+
+    let score = 0;
+    let level = 0;
+    const maxLevel = 5;
+    let highScore = localStorage.getItem('highScore') || 0;
+    const playerImg = new Image();
+    playerImg.src = "data:image/png;base64,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";
+    const bulletImg = new Image();
+    bulletImg.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAA2CAYAAAAVvbNoAAACbUlEQVR42nXVQUiTcRjH8adTlyDo1KWLndohcNv7vpuIuxgIeTCQEAyEPOwg4cGDgqAgIuTBYKCQKOZB3d61yGiI4dDEykrNcJTSaMlGlqNmLDVa8vQ+0A8egveFD2Pf/8Pe9/3vHSP6d8RNszdmWYvCNs2JmGm2YI3uVlScjQUCC/FAoPw/6bJOUdPsti3ryI2skzO967w5EK/7+w/319fLz7q6fqLJOkUtax9K+fyfk3KZfxWLJ7qTM52H8vExg+4ylIXfpRKD7jK0A85pGHQnOxDYgqNCgUF3ubsNONzbY9Cd4pa1CqVcjkF3cnZ2GX5kswy6kx0MpuAgk2HQXS58Dr5vbzPoLlswC9/SaQbdZeg+FDY3GXSXoWn4urbGoLvc3T34srrKoLt80ih8Xllh0J2cx3UY8ktLDLrL0B3IpVIMupPzwN+G3fl5Bt3J+WX0w6dkkkF3+Vp64OPsLIPuZBtGF2QSCQbdKWoYHfAhFmPQXX53t2BnaopBdxkKw/vJSQbdZZ9uwrvxcQbdKWYYNyA9Osqguwxdh62REQbdZZ+uwdtIhEF3sn2+q/BmaIhBd7L9/iuwMTjIoLucLgRrAwMMutOMYVTBq74+Bt1pprLSDy97ehh0p2mv9zK86O5m0J2iXu8leN7ZyaA7RX2+i7DS0cGgu1z4BVhub2fQnSY8nvPwtK2NQXcaCwbPwWI4zKA7DXs8ZyDV2sqgO0WITsNCSwuD7vL3cgqeNDcz6E76mG9qYiC3Y66xkcF1KNnQwOA69Li+nsF16FFdHYPr0MPaWgbXoURNTfFBKMTCdSheVdWbqK5medX9Lwgkf09Sr51zAAAALXRFWHRTb2Z0d2FyZQBieS5ibG9vZGR5LmNyeXB0by5pbWFnZS5QTkcyNEVuY29kZXKoBn/uAAAAAElFTkSuQmCC";
+    const explosionImg = new Image();
+    explosionImg.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAoCAYAAAD32nqhAAABCElEQVR42qXMPUsCcQDH8d97aGpqampqamprampqamrqARXMyJCMBM+woqGpqamprcWIkgIRkoQbsgiEogf0ztPzzv5d0VC9h+/wWT9aKrm/hBZLzg/xH7QMoeVz1ycUu3DahGKXzguheLnVJJS48u4JJa47NqFkxasRSla7FUIr1W6ZUOqmc0ZoteadElq77Z0QStf9Y0Jp2z8itG73Dwll7vwDQhuN/h6hbCMoEMo+BFuEso9hhtBmM0gRyjUHcUK5p3CBUO7ZzBPKv37MEcq/DWYJWe9mhpDVMtOECu1oilDRjSYJ7XifE4QKvhkntN39HiNUDL5GCe32ohFC+8YME7LCcIj4AxTR+ruOetLeAAAALXRFWHRTb2Z0d2FyZQBieS5ibG9vZGR5LmNyeXB0by5pbWFnZS5QTkcyNEVuY29kZXKoBn/uAAAAAElFTkSuQmCC";
+    const meteorImgs = ["METEORITE-ELEMENTONLY-s.gif", "data:image/png;base64,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", "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABwAAAAcCAYAAAByDd+UAAACQklEQVR42rVWa0pCQRh1By0h6F/0o1AreppXSyxT00R8YA972sOCCCLIoKKiqCgoWoVLaAktoSW0hOmeK99lbs6dGVEHDv5x7pnvfOd7eDySkxrv780FhwM8wr6+Hk83Tm5maKUY9jMVCiHfFyFveOsmagR8Izs5MKgkQxQFw/uLD5ajo2xzYcxGaXaY6TyEYBL/KAnxWiK7LEXY1WrUFWe5kI2TTJBVU9M2ViMjFilS4UqWD/mq+BMiOc/PSslUqMQnGlGa33Q1CUmJ17ZDBiBKK0LD/yyOzvB/4w94WbtkJDcZS0DmranydrcRYx/VZfZSSbKb9Xkl4UVxrkFoquYgg3VVebtei1pkn0cZG2/7KfawtSglJbc6SgDWVeUNH+fJeLwfptnjdlx4D4o5nIqEqvL2vJtwJSO87i0J7+7ExhuEZhOwCClk6C26cL8ZU5IBTzsJqVPhETKLVE7IpUPoJulp1nA6lSRF6KILeLkOIRwsKw2UnMOhgKgc4E4dwtvygr5TVbKi7lSEstKgnmpPDpWsKHIRiW4TwJSxCIP+RJOsbm7l6xBEyC3kbqWn2k7l++hxOuDa1uBYdBZdIp6saUzRWEJn6FTjpi4jnBgYTSpZdQCnHySnHBPfdQCrZNWJihxJOZMuXSQrLrUygBEV9Uwq8paXJxpXaOqyVQMPo8UKdx1O1DkgRYJ5YooaUlN+8Uv1Rb0SPmhrN0WhYtf8v/rx6yIeZo+eTh1rSJv5JVNxpqh3bRPn1xHYXMsUgvMHbaWtQWCw0OUAAAAtdEVYdFNvZnR3YXJlAGJ5LmJsb29kZHkuY3J5cHRvLmltYWdlLlBORzI0RW5jb2RlcqgGf+4AAAAASUVORK5CYII="].map(src => {
+      const img = new Image();
+      img.src = src;
+      return img;
+    });
+
+    const player = {
+      x: canvas.width / 2 - 25,
+      y: canvas.height - 100,
+      width: 60,
+      height: 60,
+      speed: 10
+    };
+
+    const bullets = [];
+    const meteors = [];
+
+    function spawnMeteor() {
+      const img = meteorImgs[Math.floor(Math.random() * meteorImgs.length)];
+      const size = Math.random() * 40 + 30;
+      meteors.push({
+        x: Math.random() * (canvas.width - size),
+        y: -size,
+        width: size,
+        height: size,
+        speed: Math.random() * 3 + 1,
+        img: img
+      });
+    }
+
+    
+document.addEventListener('keydown', e => {
+  keys[e.code] = true;
+
+      
+      
+      
+      if (e.code === "Space") {
+        bullets.push({
+          x: player.x + player.width / 2 - 5,
+          y: player.y,
+          width: 10,
+          height: 20,
+          speed: 8
+        });
+      playLaser();
+      }
+    });
+
+    
+
+function updateScore() {
+    if (score >= level * 50 && level < maxLevel) {
+        level++;
+    }
+
+    if (score >= 250) { // 5 levels * 50 points
+        gameOver = true;
+        document.getElementById("startScreen").style.display = "flex";
+        document.getElementById("startScreen").innerHTML = `<h1>Game Over</h1><p>Score: ${score}</p><p>High Score: ${highScore}</p><p>Level: ${level}</p><button onclick="location.reload()">Restart</button>`;
+      }
+        // Optionally trigger game over UI here
+
+    document.getElementById("scoreDisplay").innerText = `Score: ${score} | High Score: ${highScore} | Level: ${level}`;
+}
+
+    function drawPlayer() {
+      ctx.drawImage(playerImg, player.x, player.y, player.width, player.height);
+    }
+
+    function drawBullets() {
+      bullets.forEach((b, i) => {
+        b.y -= b.speed;
+        ctx.drawImage(bulletImg, b.x, b.y, b.width, b.height);
+        if (b.y < 0) bullets.splice(i, 1);
+      });
+    }
+
+    function drawMeteors() {
+      meteors.forEach((m, mi) => {
+        m.y += m.speed;
+        ctx.drawImage(m.img, m.x, m.y, m.width, m.height);
+
+        bullets.forEach((b, bi) => {
+          if (b.x < m.x + m.width &&
+              b.x + b.width > m.x &&
+              b.y < m.y + m.height &&
+              b.y + b.height > m.y) {
+            ctx.drawImage(explosionImg, m.x, m.y, m.width, m.height);
+            meteors.splice(mi, 1);
+            bullets.splice(bi, 1);
+          playExplosion();
+            score += 10; updateScore();
+            if (score > highScore) {
+              highScore = score;
+              localStorage.setItem('highScore', highScore);
+            }
+            updateScore();
+          }
+        });
+
+        if (m.y > canvas.height) meteors.splice(mi, 1);
+      });
+    }
+
+    function gameLoop() {
+      
+      
+ctx.clearRect(0, 0, canvas.width, canvas.height);
+if (gameOver) return;
+handleMovement();
+checkCollisions();
+
+      drawPlayer();
+      drawBullets();
+      drawMeteors();
+      requestAnimationFrame(gameLoop);
+    }
+
+    setInterval(() => {
+      if (gameStarted) spawnMeteor();
+    }, 1000);
+
+    document.getElementById("startButton").onclick = () => {
+      document.getElementById("startScreen").style.display = "none";
+      gameStarted = true;
+      updateScore();
+      gameLoop();
+    };
+  
+document.addEventListener('keyup', e => {
+  keys[e.code] = false;
+});
+
+function handleMovement() {
+  if (keys["ArrowLeft"] || keys["KeyA"]) player.x -= player.speed;
+  if (keys["ArrowRight"] || keys["KeyD"]) player.x += player.speed;
+  if (keys["ArrowUp"] || keys["KeyW"]) player.y -= player.speed;
+  if (keys["ArrowDown"] || keys["KeyS"]) player.y += player.speed;
+}
+
+function checkCollisions() {
+  meteors.forEach((m, mi) => {
+    if (
+      player.x < m.x + m.width &&
+      player.x + player.width > m.x &&
+      player.y < m.y + m.height &&
+      player.y + player.height > m.y
+    ) {
+      meteors.splice(mi, 1);
+      playerHP--;
+      shakeTimer = 120;
+      if (playerHP <= 0) {
+        gameOver = true;
+        document.getElementById("startScreen").style.display = "flex";
+        document.getElementById("startScreen").innerHTML = `<h1>Game Over</h1><p>Score: ${score}</p><p>High Score: ${highScore}</p><p>Level: ${level}</p><button onclick="location.reload()">Restart</button>`;
+      }
+    }
+  });
+}
+
+function drawPlayer() {
+  let offsetX = 0, offsetY = 0;
+  if (shakeTimer > 0) {
+    offsetX = Math.random() * 10 - 5;
+    offsetY = Math.random() * 10 - 5;
+    shakeTimer--;
+  }
+  ctx.drawImage(playerImg, player.x + offsetX, player.y + offsetY, player.width, player.height);
+}
+
+function startGame() {
+    if (typeof gameLoop === 'function') {
+        score = 0;
+        level = 0;
+        gameOver = false;
+        requestAnimationFrame(gameLoop);
+    } else {
+        console.warn('gameLoop() function not found.');
+    }
+}
+
+// === Powerup and Bullet Upgrade Logic ===
+
+let powerup = {
+    x: Math.random() * canvas.width,
+    y: -50,
+    width: 32,
+    height: 32,
+    image: new Image(),
+    active: false,
+    spawnTime: Date.now() + 10000  // spawn after 10 seconds
+};
+powerup.image.src = "powerupBlue_bolt.png";
+
+let upgraded = false;
+let upgradeEndTime = 0;
+
+// Update player bullet image function
+function setBulletImage(upgraded) {
+    bulletImage.src = upgraded ? "laserGreen12.png" : "default_bullet.png";
+}
+
+// Spawn and draw powerup
+function drawPowerup() {
+    if (Date.now() > powerup.spawnTime && !powerup.active) {
+        powerup.x = Math.random() * (canvas.width - powerup.width);
+        powerup.y = -50;
+        powerup.active = true;
+    }
+    if (powerup.active) {
+        powerup.y += 2;
+        ctx.drawImage(powerup.image, powerup.x, powerup.y, powerup.width, powerup.height);
+        // Collision with player
+        if (
+            player.x < powerup.x + powerup.width &&
+            player.x + player.width > powerup.x &&
+            player.y < powerup.y + powerup.height &&
+            player.y + player.height > powerup.y
+        ) {
+            powerup.active = false;
+            upgraded = true;
+            upgradeEndTime = Date.now() + 10000;  // 10 seconds
+            setBulletImage(true);
+        }
+        // Despawn if off screen
+        if (powerup.y > canvas.height) {
+            powerup.active = false;
+        }
+    }
+}
+
+// Revert bullet upgrade after 10 seconds
+function checkUpgradeTimeout() {
+    if (upgraded && Date.now() > upgradeEndTime) {
+        upgraded = false;
+        setBulletImage(false);
+    }
+}
+
+// Modify main game loop to include powerup logic
+let originalGameLoop = gameLoop;
+gameLoop = function () {
+    originalGameLoop();
+    drawPowerup();
+    checkUpgradeTimeout();
+};
+</script>
+
+</body>
+</html>
+<!-- ENHANCEMENTS_ADDED: Spacebar shooting, explosions, power-ups, enemies, scaling -->
+<!-- ADVANCED_FEATURES_ADDED: Enemy ships, Red Lasers, Asteroid explosions, Level system, Game win -->
+<!-- LATEST_ENHANCEMENTS: enemyBlack1.png, AI enemy ships, asteroid shake, meteorGrey*.png, level UI, laserRed01.png -->
