@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>SheeTY Abyss</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap');
+
+  @keyframes fadeIn {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+  }
+
+  @keyframes glowEffect {
+    0% {
+      text-shadow: 0 0 5px #ff6f00, 0 0 10px #ff6f00, 0 0 20px #ff6f00;
+    }
+    100% {
+      text-shadow: 0 0 10px #ffa500, 0 0 20px #ffa500, 0 0 30px #ffa500;
+    }
+  }
+
+  html, body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: url('background.gif') no-repeat center center fixed;
+  background-size: cover;
+  font-family: 'Orbitron', sans-serif;
+  color: #ff6f00;
+}
+
+  canvas {
+    display: block;
+  }
+
+  #startScreen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    color: #ff6f00;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+    animation: fadeIn 2s ease-in-out;
+    font-family: 'Orbitron', sans-serif;
+    text-align: center;
+  }
+
+    h1, h2 {
+      color: #ff9966;
+      text-shadow: 0 0 10px #ff9966;
+    }
+    button {
+      padding: 1em 2em;
+      margin-top: 1em;
+      font-size: 1.5em;
+      font-family: 'Orbitron', sans-serif;
+      background: linear-gradient(145deg, #ff9966, #cc5200);
+      color: white;
+      border: none;
+      border-radius: 0.5em;
+      cursor: pointer;
+      box-shadow: 0 0 10px #ff9966;
+      transition: transform 0.2s, background 0.3s;
+    }
+    button:hover {
+      transform: scale(1.05);
+      background: linear-gradient(145deg, #cc5200, #ff9966);
+    }
+    button:active {
+      transform: scale(0.98);
+    }
+
+  #startScreen h1 {
+    font-size: 3em;
+    animation: glowEffect 5s infinite alternate;
+  }
+
+  #startButton {
+  all: unset; /* Removes ALL browser default button styles */
+  display: inline-block;
+  padding: 1em 2em;
+  font-size: 1.2em;
+  margin-top: 1em;
+  background-color: rgba(255, 111, 0, 0.2); /* Burnt orange transparent */
+  color: #ff6f00;
+  border: 2px solid #ff6f00;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: center;
+  transition: background-color 0.3s, color 0.3s, box-shadow 0.3s;
+  font-family: 'Orbitron', sans-serif;
+  }
+
+  #startButton:hover {
+    background-color: #ff6f00;
+    color: black;
+    box-shadow: 0 0 15px #ff6f00;
+  }
+
+  #startButton:active {
+    transform: scale(0.98);
+  }
+
+  #scoreDisplay {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    color: #ff6f00;
+    font-size: 24px;
+    z-index: 5;
+    font-family: 'Orbitron', sans-serif;
+    text-shadow: 0 0 5px #ff6f00;
+  }
+</style>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap');
+
+#Button {
+  all: unset;
+  display: inline-block;
+  padding: 1em 2em;
+  font-size: 1.2em;
+  margin-top: 1em;
+  background-color: rgba(255, 111, 0, 0.2);
+  color: #ff6f00;
+  border: 2px solid #ff6f00;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: center;
+  transition: background-color 0.3s, color 0.3s, box-shadow 0.3s;
+  font-family: 'Orbitron', sans-serif;
+}
+
+#Button:hover {
+  background-color: #ff6f00;
+  color: black;
+  box-shadow: 0 0 15px #ff6f00;
+}
+
+#Button:active {
+  transform: scale(0.98);
+}
+
+#scoreDisplay {
+  font-family: 'Orbitron';
+  color: #ff6f00;
+  font-size: 24px;
+  text-shadow: 0 0 5px #ff6f00;
+}
+</style>
+</head>
+<body>
+<div id="startScreen">
+<h1>SheeTy Abyss</h1>
+<button id="startButton">Start SheeT</button>
+</div>
+<div id="scoreDisplay">Score: 0 | High Score: 0 | Level: 0 
+</div>
+<canvas id="gameCanvas"></canvas>
+<style>
+  body {
+    margin: 0;
+    overflow: hidden;
+    background: url('background.jpg') no-repeat center center fixed;
+    background-size: cover;
+    font-family: Arial, sans-serif;
+    color: white;
+  }
+
+  #startScreen {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    z-index: 10;
+  }
+
+  #startButton,
+#Button {
+  all: unset;
+  display: inline-block;
+  padding: 1em 2em;
+  font-size: 1.2em;
+  margin-top: 1em;
+  background-color: rgba(255, 111, 0, 0.2); /* Burnt orange transparent */
+  color: #ff6f00;
+  border: 2px solid #ff6f00;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: center;
+  transition: background-color 0.3s, color 0.3s, box-shadow 0.3s;
+  font-family: 'Orbitron', sans-serif;
+}
+
+#startButton:hover,
+#Button:hover {
+  background-color: #ff6f00;
+  color: black;
+  box-shadow: 0 0 15px #ff6f00;
+}
+
+#startButton:active,
+#Button:active {
+  transform: scale(0.98);
+} 
+
+button#restartButton,
+#restartButton {
+  all: unset;
+  display: inline-block;
+  padding: 1em 2em;
+  font-size: 1.2em;
+  margin-top: 1em;
+  background-color: rgba(255, 111, 0, 0.2); /* Burnt orange transparent */
+  color: #ff6f00;
+  border: 2px solid #ff6f00;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: center;
+  transition: background-color 0.3s, color 0.3s, box-shadow 0.3s;
+  font-family: 'Orbitron', sans-serif;
+}
+
+button#restartButton:hover,
+#restartButton:hover {
+  background-color: #ff6f00;
+  color: black;
+  box-shadow: 0 0 15px #ff6f00;
+}
+
+button#restartButton:active,
+#restartButton:active {
+  transform: scale(0.98);
+}
+</style>
+<script>
+
+  
+  // Load sounds
+  function createSound(src) {
+    const audio = new Audio(src);
+    return () => {
+      const sound = audio.cloneNode();
+      sound.play().catch(e => console.warn("Sound error:", e));
+    };
+  }
+
+  const playLaser = createSound('./sounds/sfx_laser1.ogg');
+  const playExplosion = createSound('./sounds/sfx_lose.ogg');
+  const playShieldDown = createSound('./sounds/sfx_shieldDown.ogg');
+  const playShieldUp = createSound("./sounds/sfx_shieldUp.ogg");
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    
+let gameStarted = false;
+let gameOver = false;
+let playerHP = 4;
+let meteorHP = 2;
+let keys = {};
+let shakeTimer = 0;
+let score = 0;
+    let level = 1;
+    const maxLevel = 5;
+    let highScore = localStorage.getItem('highScore') || 0;
+    const playerImg = new Image();
+    playerImg.src = "./sprites/playerShip3_orange.png";
+
+    const bulletImg = new Image();
+    bulletImg.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAA2CAYAAAAVvbNoAAACbUlEQVR42nXVQUiTcRjH8adTlyDo1KWLndohcNv7vpuIuxgIeTCQEAyEPOwg4cGDgqAgIuTBYKCQKOZB3d61yGiI4dDEykrNcJTSaMlGlqNmLDVa8vQ+0A8egveFD2Pf/8Pe9/3vHSP6d8RNszdmWYvCNs2JmGm2YI3uVlScjQUCC/FAoPw/6bJOUdPsti3ryI2skzO967w5EK/7+w/319fLz7q6fqLJOkUtax9K+fyfk3KZfxWLJ7qTM52H8vExg+4ylIXfpRKD7jK0A85pGHQnOxDYgqNCgUF3ubsNONzbY9Cd4pa1CqVcjkF3cnZ2GX5kswy6kx0MpuAgk2HQXS58Dr5vbzPoLlswC9/SaQbdZeg+FDY3GXSXoWn4urbGoLvc3T34srrKoLt80ih8Xllh0J2cx3UY8ktLDLrL0B3IpVIMupPzwN+G3fl5Bt3J+WX0w6dkkkF3+Vp64OPsLIPuZBtGF2QSCQbdKWoYHfAhFmPQXX53t2BnaopBdxkKw/vJSQbdZZ9uwrvxcQbdKWYYNyA9Osqguwxdh62REQbdZZ+uwdtIhEF3sn2+q/BmaIhBd7L9/iuwMTjIoLucLgRrAwMMutOMYVTBq74+Bt1pprLSDy97ehh0p2mv9zK86O5m0J2iXu8leN7ZyaA7RX2+i7DS0cGgu1z4BVhub2fQnSY8nvPwtK2NQXcaCwbPwWI4zKA7DXs8ZyDV2sqgO0WITsNCSwuD7vL3cgqeNDcz6E76mG9qYiC3Y66xkcF1KNnQwOA69Li+nsF16FFdHYPr0MPaWgbXoURNTfFBKMTCdSheVdWbqK5medX9Lwgkf09Sr51zAAAALXRFWHRTb2Z0d2FyZQBieS5ibG9vZGR5LmNyeXB0by5pbWFnZS5QTkcyNEVuY29kZXKoBn/uAAAAAElFTkSuQmCC";
+
+    const upgradedBulletImg = new Image();
+    upgradedBulletImg.src = "laserGreen12.png";
+    const explosionImg = new Image();
+    explosionImg.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAoCAYAAAD32nqhAAABCElEQVR42qXMPUsCcQDH8d97aGpqampqamprampqamrqARXMyJCMBM+woqGpqamprcWIkgIRkoQbsgiEogf0ztPzzv5d0VC9h+/wWT9aKrm/hBZLzg/xH7QMoeVz1ycUu3DahGKXzguheLnVJJS48u4JJa47NqFkxasRSla7FUIr1W6ZUOqmc0ZoteadElq77Z0QStf9Y0Jp2z8itG73Dwll7vwDQhuN/h6hbCMoEMo+BFuEso9hhtBmM0gRyjUHcUK5p3CBUO7ZzBPKv37MEcq/DWYJWe9mhpDVMtOECu1oilDRjSYJ7XifE4QKvhkntN39HiNUDL5GCe32ohFC+8YME7LCcIj4AxTR+ruOetLeAAAALXRFWHRTb2Z0d2FyZQBieS5ibG9vZGR5LmNyeXB0by5pbWFnZS5QTkcyNEVuY29kZXKoBn/uAAAAAElFTkSuQmCC";
+
+const meteorImagesByLevel = {
+  1: ["./Sprites/meteorBrown_small2.png"],
+  2: ["./Sprites/meteorGrey_med2.png", "./sprites/meteorGrey_small2.png"],
+  3: ["./Sprites/meteorBrown_med3.png", "./Sprites/meteorBrown_big2.png"],
+  4: ["./Sprites/enemyGreen2.png"],
+  5: ["METEORITE-ELEMENTONLY-s.gif"] 
+};
+
+    const player = {
+      x: canvas.width / 2 - 25,
+      y: canvas.height - 100,
+      width: 60,
+      height: 60,
+      speed: 10
+    };
+
+    const bullets = [];
+    const meteors = [];
+
+    function spawnMeteor() {
+  const availableImages = meteorImagesByLevel[level];
+  const imgSrc = availableImages[Math.floor(Math.random() * availableImages.length)];
+  const img = new Image();
+  img.src = imgSrc;
+      const size = Math.random() * 40 + 30;
+      meteors.push({
+        x: Math.random() * (canvas.width - size),
+        y: -size,
+        width: size,
+        height: size,
+        speed: Math.random() * 3 + 1,
+	hp: meteorHP,
+        img: img
+      });
+    }
+
+    
+document.addEventListener('keydown', e => {
+  keys[e.code] = true;
+
+  if (e.code === "Space") {
+    if (upgraded) {
+      // Fire two bullets
+      bullets.push({
+        x: player.x + player.width / 2 - 15,
+        y: player.y,
+        width: 10,
+        height: 20,
+        speed: 8
+      });
+      bullets.push({
+        x: player.x + player.width / 2 + 5,
+        y: player.y,
+        width: 10,
+        height: 20,
+        speed: 8
+      });
+    } else {
+      // Fire one bullet
+      bullets.push({
+        x: player.x + player.width / 2 - 5,
+        y: player.y,
+        width: 10,
+        height: 20,
+        speed: 8
+      });
+    }
+    playLaser();
+  }
+});
+function updateBackground() {
+    let bg = "background1.gif";
+    if (level >= 2) bg = "background2.gif";
+if (level >= 3) bg = "background3.gif";
+if (level >= 4) bg = "background4.gif";
+if (level >= 5) bg = "background5.gif";
+    document.body.style.backgroundImage = `url('${bg}')`;
+    document.body.style.backgroundSize = "cover";
+    document.body.style.backgroundRepeat = "no-repeat";
+    document.body.style.backgroundPosition = "center center";
+}
+    
+
+function updateScore() {
+    if (score >= level * 100 && level < maxLevel) {
+        level++;
+        updateBackground();
+    }
+
+    if (score >= 500) { // 5 levels * 50 points
+        gameOver = true;
+        document.getElementById("startScreen").style.display = "flex";
+        document.getElementById("startScreen").innerHTML = `<h1>Game Over</h1><p>Score: ${score}</p><p>High Score: ${highScore}</p><p>Level: ${level}</p><button onclick="location.reload()">Restart</button>`;
+      }
+        // Optionally trigger game over UI here
+
+    document.getElementById("scoreDisplay").innerText = `Score: ${score} | High Score: ${highScore} | Level: ${level}`;
+}
+
+    function drawPlayer() {
+      ctx.drawImage(playerImg, player.x, player.y, player.width, player.height);
+    }
+
+    function drawBullets() {
+      bullets.forEach((b, i) => {
+        b.y -= b.speed;
+        const img = upgraded ? upgradedBulletImg : bulletImg;
+        ctx.drawImage(bulletImg, b.x, b.y, b.width, b.height);
+        if (b.y < 0) bullets.splice(i, 1);
+      });
+    }
+
+    function drawMeteors() {
+      meteors.forEach((m, mi) => {
+        m.y += m.speed;
+        ctx.drawImage(m.img, m.x, m.y, m.width, m.height);
+
+        bullets.forEach((b, bi) => {
+          if (b.x < m.x + m.width &&
+              b.x + b.width > m.x &&
+              b.y < m.y + m.height &&
+              b.y + b.height > m.y) {
+            meteorHP--;
+            ctx.drawImage(explosionImg, m.x, m.y, m.width, m.height);
+            if (meteorHP <= 0) meteors.splice(mi, 1);
+            bullets.splice(bi, 1);
+          playExplosion();
+            score += 10; updateScore();
+            if (score > highScore) {
+              highScore = score;
+              localStorage.setItem('highScore', highScore);
+            }
+            updateScore();
+          }
+        });
+
+        if (m.y > canvas.height) meteors.splice(mi, 1);
+      });
+    }
+
+    function gameLoop() {
+      
+      
+ctx.clearRect(0, 0, canvas.width, canvas.height);
+if (gameOver) return;
+handleMovement();
+checkCollisions();
+
+      drawPlayer();
+      drawBullets();
+      drawMeteors();
+
+      requestAnimationFrame(gameLoop);
+    }
+
+    setInterval(() => {
+      if (gameStarted) spawnMeteor();
+    }, 1000);
+
+    document.getElementById("startButton").onclick = () => {
+      document.getElementById("startScreen").style.display = "none";
+      gameStarted = true;
+      updateBackground();
+      updateScore();
+      gameLoop();
+    };
+  
+document.addEventListener('keyup', e => {
+  keys[e.code] = false;
+});
+
+function handleMovement() {
+  if (keys["ArrowLeft"] || keys["KeyA"]) player.x -= player.speed;
+  if (keys["ArrowRight"] || keys["KeyD"]) player.x += player.speed;
+  if (keys["ArrowUp"] || keys["KeyW"]) player.y -= player.speed;
+  if (keys["ArrowDown"] || keys["KeyS"]) player.y += player.speed;
+}
+
+function checkCollisions() {
+  meteors.forEach((m, mi) => {
+    if (
+      player.x < m.x + m.width &&
+      player.x + player.width > m.x &&
+      player.y < m.y + m.height &&
+      player.y + player.height > m.y
+    ) {
+      meteors.splice(mi, 1);
+      playerHP--;
+      shakeTimer = 120;
+      if (playerHP <= 0) {
+        gameOver = true;
+        document.getElementById("startScreen").style.display = "flex";
+        document.getElementById("startScreen").innerHTML = `<h1>Game Over</h1><p>Score: ${score}</p><p>High Score: ${highScore}</p><p>Level: ${level}</p><button onclick="location.reload()">Restart</button>`;
+      }
+    }
+  });
+}
+
+function drawPlayer() {
+  let offsetX = 0, offsetY = 0;
+  if (shakeTimer > 0) {
+    offsetX = Math.random() * 10 - 5;
+    offsetY = Math.random() * 10 - 5;
+    shakeTimer--;
+  }
+  ctx.drawImage(playerImg, player.x + offsetX, player.y + offsetY, player.width, player.height);
+}
+function checkUpgradeTimeout() {
+  if (upgraded && Date.now() > upgradeEndTime) {
+    upgraded = false;
+    setBulletImg(false); // switch to default bullet
+  }
+}
+
+function startGame() {
+    if (typeof gameLoop === 'function') {
+        score = 0;
+        level = 0;
+        gameOver = false;
+        drawPowerup();
+        checkUpgradeTimeout();
+        requestAnimationFrame(gameLoop);
+    } else {
+        console.warn('gameLoop() function not found.');
+    }
+}
+let originalGameLoop = gameLoop;
+gameLoop = function () {
+    originalGameLoop();
+    drawPowerup();
+    checkUpgradeTimeout();
+};
+
+// === Powerup and Bullet Upgrade Logic ===
+
+let powerup = {
+    x: Math.random() * canvas.width,
+    y: -50,
+    width: 32,
+    height: 32,
+    image: new Image(),
+    active: false,
+    spawnTime: Date.now() + 10000  // spawn after 10 seconds
+};
+powerup.image.src = "powerupBlue_bolt.png";
+
+let upgraded = false;
+let upgradeEndTime = 0;
+
+// Update player bullet image function
+function setBulletImg(upgraded) {
+    bulletImage.src = Upgraded ? "laserGreen12.png" : "laserRed01.png";
+}
+
+// Spawn and draw powerup
+function drawPowerup() {
+    if (Date.now() > powerup.spawnTime && !powerup.active) {
+        powerup.x = Math.random() * (canvas.width - powerup.width);
+        powerup.y = -50;
+        powerup.active = true;
+    }
+    if (powerup.active) {
+        powerup.y += 2;
+        ctx.drawImage(powerup.image, powerup.x, powerup.y, powerup.width, powerup.height);
+        // Collision with player
+        if (
+            player.x < powerup.x + powerup.width &&
+            player.x + player.width > powerup.x &&
+            player.y < powerup.y + powerup.height &&
+            player.y + player.height > powerup.y
+        ) {
+            powerup.active = false;
+            upgraded = true;
+            upgradeEndTime = Date.now() + 10000;  // 10 seconds
+            setBulletImage(true);
+            playShieldUp();
+        }
+        // Despawn if off screen
+        if (powerup.y > canvas.height) {
+            powerup.active = false;
+        }
+    }
+}
+
+
+// Modify main game loop to include powerup logic
+</script>
+
+</body>
+</html>
