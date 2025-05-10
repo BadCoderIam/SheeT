@@ -26,7 +26,7 @@
   margin: 0;
   padding: 0;
   overflow: hidden;
-  background: url('background.gif') no-repeat center center fixed;
+  background: url('./levels/background.gif') no-repeat center center fixed;
   background-size: cover;
   font-family: 'Orbitron', sans-serif;
   color: #ff6f00;
@@ -171,7 +171,7 @@
   body {
     margin: 0;
     overflow: hidden;
-    background: url('background.jpg') no-repeat center center fixed;
+    background: url('./levels/background.jpg') no-repeat center center fixed;
     background-size: cover;
     font-family: Arial, sans-serif;
     color: white;
@@ -361,11 +361,11 @@ document.addEventListener('keydown', e => {
   }
 });
 function updateBackground() {
-    let bg = "background1.gif";
-    if (level >= 2) bg = "background2.gif";
-if (level >= 3) bg = "background3.gif";
-if (level >= 4) bg = "background4.gif";
-if (level >= 5) bg = "background5.gif";
+    let bg = "./levels/background1.gif";
+    if (level >= 2) bg = "./levels/background2.gif";
+if (level >= 3) bg = "./levels/background3.gif";
+if (level >= 4) bg = "./levels/background4.gif";
+if (level >= 5) bg = "./levels/background5.gif";
     document.body.style.backgroundImage = `url('${bg}')`;
     document.body.style.backgroundSize = "cover";
     document.body.style.backgroundRepeat = "no-repeat";
