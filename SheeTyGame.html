@@ -330,6 +330,11 @@ const meteorHPByImage = {
     const bullets = [];
     const meteors = [];
 
+const enemyBullets = [];
+const enemyBulletImg = new Image();
+enemyBulletImg.src = "./sprites/laserGreen12.png";
+
+
     function spawnMeteor() {
   const availableImages = meteorImagesByLevel[level];
   const imgSrc = availableImages[Math.floor(Math.random() * availableImages.length)];
@@ -479,12 +484,31 @@ checkCollisions();
       drawBullets();
       drawMeteors();
 
-      requestAnimationFrame(gameLoop);
+      drawEnemyBullets();
+requestAnimationFrame(gameLoop);
     }
 
     setInterval(() => {
       if (gameStarted) spawnMeteor();
     }, 1000);
+
+setInterval(() => {
+  if (gameStarted && level === 4) {
+    meteors.forEach(m => {
+      if (m.img.src.includes("enemyGreen2.png")) {
+        enemyBullets.push({
+          x: m.x + m.width / 2 - 5,
+          y: m.y + m.height,
+          width: 10,
+          height: 20,
+          speed: 5
+        });
+        playLaser();
+      }
+    });
+  }
+}, 5000);
+
 
     document.getElementById("startButton").onclick = () => {
       document.getElementById("startScreen").style.display = "none";
@@ -617,6 +641,40 @@ function drawPowerup() {
             powerup.active = false;
         }
     }
+}
+
+
+
+function drawEnemyBullets() {
+  for (let i = enemyBullets.length - 1; i >= 0; i--) {
+    const b = enemyBullets[i];
+    b.y += b.speed;
+    ctx.drawImage(enemyBulletImg, b.x, b.y, b.width, b.height);
+
+    // Check collision with player
+    if (
+      b.x < player.x + player.width &&
+      b.x + b.width > player.x &&
+      b.y < player.y + player.height &&
+      b.y + b.height > player.y
+    ) {
+      enemyBullets.splice(i, 1);
+      playerHP--;
+      shakeTimer = 120;
+      updatePlayerImage();
+      playShieldDown();
+
+      if (playerHP <= 0) {
+        gameOver = true;
+        document.getElementById("startScreen").style.display = "flex";
+        document.getElementById("startScreen").innerHTML = `<h1>Game Over</h1><p>Score: ${score}</p><p>High Score: ${highScore}</p><p>Level: ${level}</p><button onclick="location.reload()">Restart</button>`;
+      }
+    }
+
+    if (b.y > canvas.height) {
+      enemyBullets.splice(i, 1);
+    }
+  }
 }
 
 
