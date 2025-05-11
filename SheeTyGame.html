@@ -407,7 +407,7 @@ function updateScore() {
     if (score >= 500) { // 5 levels * 50 points
         gameOver = true;
         document.getElementById("startScreen").style.display = "flex";
-        document.getElementById("startScreen").innerHTML = `<h1>Game Over</h1><p>Score: ${score}</p><p>High Score: ${highScore}</p><p>Level: ${level}</p><button onclick="location.reload()">Restart</button>`;
+        document.getElementById("startScreen").innerHTML = `<h1>You Win!!</h1><p>Score: ${score}</p><p>High Score: ${highScore}</p><p>Level: ${level}</p><button onclick="location.reload()">Restart</button>`;
       }
         // Optionally trigger game over UI here
 
