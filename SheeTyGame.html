@@ -306,8 +306,8 @@ const meteorImagesByLevel = {
   1: ["./Sprites/meteorBrown_small2.png"],
   2: ["./Sprites/meteorGrey_med2.png", "./sprites/meteorGrey_small2.png"],
   3: ["./Sprites/meteorBrown_med3.png", "./Sprites/meteorBrown_big2.png"],
-  4: ["./Sprites/enemyGreen2.png"],
-  5: ["METEORITE-ELEMENTONLY-s.gif"] 
+  4: ["./Sprites/enemyGreen2.png", "./Sprites/enemyBlack3.png"],
+  5: ["METEORITE-ELEMENTONLY-s.gif", "./Sprites/enemyBlack4.png"] 
 };
 const meteorHPByImage = {
   "./Sprites/meteorBrown_small2.png": 2,
@@ -316,6 +316,8 @@ const meteorHPByImage = {
   "./Sprites/meteorBrown_med3.png": 4,
   "./Sprites/meteorBrown_big2.png": 4,
   "./Sprites/enemyGreen2.png": 4,
+  "./Sprites/enemyBlack3.png": 4,
+  "./Sprites/enemyBlack4.png": 4,
   "METEORITE-ELEMENTONLY-s.gif": 5
 };
 
@@ -345,15 +347,14 @@ enemyBulletImg.src = "./sprites/laserGreen12.png";
   const hp = baseHp + (level - 1);
 
   // Step 2: Increase HP with level if desired
-      meteors.push({
-        x: Math.random() * (canvas.width - size),
+      meteors.push({x: Math.random() * (canvas.width - size),
         y: -size,
         width: size,
         height: size,
         speed: Math.random() * 3 + 1,
 	hp: hp,
-        img: img
-      });
+        img: img,
+  lastShotTime: Date.now()});
     }
 
     
@@ -492,22 +493,30 @@ requestAnimationFrame(gameLoop);
       if (gameStarted) spawnMeteor();
     }, 1000);
 
+const shootingEnemies = ["enemyGreen2.png", "enemyBlack3.png", "enemyBlack4.png"];
+
+
 setInterval(() => {
-  if (gameStarted && level === 4) {
+  if (gameStarted && level >= 4) {
     meteors.forEach(m => {
-      if (m.img.src.includes("enemyGreen2.png")) {
-        enemyBullets.push({
-          x: m.x + m.width / 2 - 5,
-          y: m.y + m.height,
-          width: 10,
-          height: 20,
-          speed: 5
-        });
-        playLaser();
+      if (!m.lastShotTime) m.lastShotTime = Date.now();
+      if (shootingEnemies.some(name => m.img.src.includes(name))) {
+        if (Date.now() - m.lastShotTime > 2000) {
+          enemyBullets.push({
+            x: m.x + m.width / 2 - 4,
+            y: m.y + m.height,
+            width: 8,
+            height: 16,
+            speed: 4
+          });
+          m.lastShotTime = Date.now();
+          playLaser();
+        }
       }
     });
   }
-}, 5000);
+}, 100);
+ // check more often, but shoot every 5s per meteor
 
 
     document.getElementById("startButton").onclick = () => {
@@ -601,7 +610,7 @@ let powerup = {
     height: 32,
     image: new Image(),
     active: false,
-    spawnTime: Date.now() + 10000  // spawn after 10 seconds
+    spawnTime: Date.now() + 10000 + Math.random() * 10000
 };
 powerup.image.src = "./sprites/powerupBlue_bolt.png";
 
@@ -677,8 +686,6 @@ function drawEnemyBullets() {
   }
 }
 
-
-// Modify main game loop to include powerup logic
 </script>
 
 </body>
