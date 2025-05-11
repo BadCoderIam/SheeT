@@ -467,9 +467,13 @@ function updateScore() {
       }
     }
 
-    if (m.y > canvas.height) {
-      meteors.splice(mi, 1);
-    }
+    if (
+  m.y > canvas.height ||
+  m.x < -m.width ||
+  m.x > canvas.width + m.width
+) {
+  meteors.splice(mi, 1);
+}
   }
 }
 
@@ -502,12 +506,23 @@ setInterval(() => {
       if (!m.lastShotTime) m.lastShotTime = Date.now();
       if (shootingEnemies.some(name => m.img.src.includes(name))) {
         if (Date.now() - m.lastShotTime > 2000) {
-          enemyBullets.push({
-            x: m.x + m.width / 2 - 4,
-            y: m.y + m.height,
-            width: 8,
-            height: 16,
-            speed: 4
+          // Calculate direction vector from enemy to player
+const dx = (player.x + player.width / 2) - (m.x + m.width / 2);
+const dy = (player.y + player.height / 2) - (m.y + m.height);
+const magnitude = Math.sqrt(dx * dx + dy * dy);
+
+// Normalize and multiply by desired bullet speed
+const speed = 5;
+const velocityX = (dx / magnitude) * speed;
+const velocityY = (dy / magnitude) * speed;
+
+enemyBullets.push({
+  x: m.x + m.width / 2 - 5,
+  y: m.y + m.height,
+  width: 10,
+  height: 20,
+  vx: velocityX,
+  vy: velocityY
           });
           m.lastShotTime = Date.now();
           playLaser();
@@ -657,7 +672,8 @@ function drawPowerup() {
 function drawEnemyBullets() {
   for (let i = enemyBullets.length - 1; i >= 0; i--) {
     const b = enemyBullets[i];
-    b.y += b.speed;
+    b.x += b.vx;
+    b.y += b.vy;
     ctx.drawImage(enemyBulletImg, b.x, b.y, b.width, b.height);
 
     // Check collision with player
