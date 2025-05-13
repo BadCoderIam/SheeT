@@ -167,7 +167,9 @@
 <div id="scoreDisplay">Score: 0 | High Score: 0 | Level: 0 
 </div>
 <div id="healthBarContainer">
-  <div id="healthBar"></div>
+  <div id="healthBar">
+    <div id="healthText">HP: 20/20</div>
+  </div>
 </div>
 <canvas id="gameCanvas"></canvas>
 <style>
@@ -197,7 +199,7 @@
   top: 100px;
   left: 80px;
   width: 200px;
-  height: 20px;
+  height: 25px;
   border: 2px solid #ff6f00;
   background-color: #333;
   z-index: 5;
@@ -205,9 +207,22 @@
 
 #healthBar {
   height: 100%;
-  background-color: #ff6f00;
+  background-color: green;
   width: 100%;
-  transition: width 0.3s ease;
+  position: relative;
+  transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+#healthText {
+  position: absolute;
+  width: 100%;
+  text-align: center;
+  line-height: 25px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 14px;
+  color: lime;
+  pointer-events: none;
+  top: 0;
 }
 
 @keyframes flashRed {
@@ -820,12 +835,34 @@ function updatePlayerImage() {
   }
 }
 function updateHealthBar() {
+  const maxHP = 20;
   const bar = document.getElementById('healthBar');
+  const text = document.getElementById('healthText');
+  
   if (bar) {
-    const width = (playerHP / 20) * 100;
+    const width = (playerHP / maxHP) * 100;
     bar.style.width = width + '%';
+
+    // Flash animation
     bar.classList.add('flash-hit');
     setTimeout(() => bar.classList.remove('flash-hit'), 300);
+
+    // Change bar color
+    if (playerHP > 10) {
+      bar.style.backgroundColor = 'green';
+      if (text) text.style.color = 'lime';
+    } else if (playerHP > 5) {
+      bar.style.backgroundColor = 'orange';
+      if (text) text.style.color = 'orange';
+    } else {
+      bar.style.backgroundColor = 'red';
+      if (text) text.style.color = 'red';
+    }
+
+    // Update the text
+    if (text) {
+      text.textContent = `HP: ${playerHP}/${maxHP}`;
+    }
   }
 }
 
