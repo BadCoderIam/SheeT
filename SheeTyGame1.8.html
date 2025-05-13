@@ -349,36 +349,6 @@ let flashTimer = 0;
     const explosionImg = new Image();
     explosionImg.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAoCAYAAAD32nqhAAABCElEQVR42qXMPUsCcQDH8d97aGpqampqamprampqamrqARXMyJCMBM+woqGpqamprcWIkgIRkoQbsgiEogf0ztPzzv5d0VC9h+/wWT9aKrm/hBZLzg/xH7QMoeVz1ycUu3DahGKXzguheLnVJJS48u4JJa47NqFkxasRSla7FUIr1W6ZUOqmc0ZoteadElq77Z0QStf9Y0Jp2z8itG73Dwll7vwDQhuN/h6hbCMoEMo+BFuEso9hhtBmM0gRyjUHcUK5p3CBUO7ZzBPKv37MEcq/DWYJWe9mhpDVMtOECu1oilDRjSYJ7XifE4QKvhkntN39HiNUDL5GCe32ohFC+8YME7LCcIj4AxTR+ruOetLeAAAALXRFWHRTb2Z0d2FyZQBieS5ibG9vZGR5LmNyeXB0by5pbWFnZS5QTkcyNEVuY29kZXKoBn/uAAAAAElFTkSuQmCC";
 
-const rogueEnemies = [];
-
-function spawnRogueEnemy() {
-  // Only spawn if fewer than 2 rogue enemies are active
-  if (rogueEnemies.length >= 2) return;
-
-  const img = new Image();
-  img.src = "enemyBlue1.png"; // Your rogue enemy image
-
-  const size = 60;
-  const hp = 6;
-
-  const x = Math.random() * (canvas.width - size);
-  const y = Math.random() * (canvas.height / 2); // upper half of screen
-
-  rogueEnemies.push({
-    x: x,
-    y: y,
-    width: size,
-    height: size,
-    vx: 0,
-    vy: 0,
-    speed: 0, // doesn't move
-    hp: hp,
-    img: img,
-    lastShotTime: Date.now(),
-    isRogueEnemy: true
-  });
-}
-
 const rogueMeteorImage = new Image();
 rogueMeteorImage.src = "METEORITE-ELEMENTONLY-s.gif";
 
@@ -422,7 +392,7 @@ enemyBulletImg.src = "./sprites/laserGreen12.png";
   const availableImages = meteorImagesByLevel[level];
   const imgSrc = availableImages[Math.floor(Math.random() * availableImages.length)];
   const img = new Image();
-  img.src = isRogueEnemy ? "enemyBlue1.png : imgSrc;
+  img.src = imgSrc;
 
   let size = Math.random() * 40 + 30;
   const baseHp = meteorHPByImage[imgSrc] || 1;
@@ -746,11 +716,6 @@ function drawHealthBar() {
 
 const shootingEnemies = ["enemyGreen2.png", "enemyBlack3.png", "enemyBlack4.png"];
 
-setInterval(() => {
-  if (gameStarted && level >= 4) {
-    spawnRogueEnemy();
-  }
-}, 3000);
 
 setInterval(() => {
   if (gameStarted && level >= 4) {
