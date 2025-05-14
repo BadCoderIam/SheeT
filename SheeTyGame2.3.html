@@ -356,7 +356,7 @@ const brownFragmentImg = new Image();
 brownFragmentImg.src = "./Sprites/meteorBrown_tiny1.png";
     upgradedBulletImg.src = "laserGreen12.png";
     const explosionImg = new Image();
-    explosionImg.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAoCAYAAAD32nqhAAABCElEQVR42qXMPUsCcQDH8d97aGpqampqamprampqamrqARXMyJCMBM+woqGpqamprcWIkgIRkoQbsgiEogf0ztPzzv5d0VC9h+/wWT9aKrm/hBZLzg/xH7QMoeVz1ycUu3DahGKXzguheLnVJJS48u4JJa47NqFkxasRSla7FUIr1W6ZUOqmc0ZoteadElq77Z0QStf9Y0Jp2z8itG73Dwll7vwDQhuN/h6hbCMoEMo+BFuEso9hhtBmM0gRyjUHcUK5p3CBUO7ZzBPKv37MEcq/DWYJWe9mhpDVMtOECu1oilDRjSYJ7XifE4QKvhkntN39HiNUDL5GCe32ohFC+8YME7LCcIj4AxTR+ruOetLeAAAALXRFWHRTb2Z0d2FyZQBieS5ibG9vZGR5LmNyeXB0by5pbWFnZS5QTkcyNEVuY29kZXKoBn/uAAAAAElFTkSuQmCC";
+    explosionImg.src = "./Sprites/Blank.png";
 
 const rogueMeteorImage = new Image();
 rogueMeteorImage.src = "METEORITE-ELEMENTONLY-s.gif";
@@ -391,6 +391,15 @@ const meteorHPByImage = {
       height: 60,
       speed: 10
     };
+
+window.addEventListener("resize", () => {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  // Optional: Keep player inside new bounds
+  player.x = Math.min(canvas.width - player.width, player.x);
+  player.y = Math.min(canvas.height - player.height, player.y);
+});
 
     const bullets = [];
     const meteors = [];
@@ -805,6 +814,8 @@ function handleMovement() {
   if (keys["ArrowRight"] || keys["KeyD"]) player.x += player.speed;
   if (keys["ArrowUp"] || keys["KeyW"]) player.y -= player.speed;
   if (keys["ArrowDown"] || keys["KeyS"]) player.y += player.speed;
+player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
+player.y = Math.max(0, Math.min(canvas.height - player.height, player.y));
 }
 
 function updatePlayerImage() {
