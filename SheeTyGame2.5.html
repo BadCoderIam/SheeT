@@ -1,3 +1,329 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>SheeTY Abyss</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap');
+
+  @keyframes fadeIn {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+  }
+
+@keyframes flashTimer {
+  0%, 100% { transform: scale(1); color: #07f322; text-shadow: 0 0 5px #ff6f00; }
+  50% { transform: scale(1.5); color: rgb(40, 9, 247); text-shadow: 0 0 15px #ffff00, 0 0 25px #ffaa00; }
+}
+
+@keyframes glowEffect {
+  0% {
+    text-shadow: 0 0 5px #ff6f00, 0 0 10px #ff6f00, 0 0 20px #ff6f00;
+  }
+  100% {
+    text-shadow: 0 0 10px #ffa500, 0 0 20px #ffa500, 0 0 30px #ffa500;
+  }
+}
+
+@keyframes pulseTimer {
+  0%   { transform: scale(1);   color: rgb(255, 0, 208); }
+  50%  { transform: scale(1.5); color: #ff3333; text-shadow: 0 0 10px #ff3333; }
+  100% { transform: scale(1);   color: rgb(255, 2, 179); }
+}
+
+/* Always-on glow */
+#timerDisplay {
+  animation: glowEffect 5s linear infinite;
+}
+
+/* Pulse added when timeLeft <= 10 */
+#timerDisplay.pulsing {
+  animation: glowEffect 5s linear infinite, pulseTimer 1s infinite !important;
+}
+
+/* Flash overrides all temporarily */
+#timerDisplay.flash {
+  animation: flashTimer 1s ease-in-out 3 !important;
+}
+
+  html, body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: url('./levels/background.gif') no-repeat center center fixed;
+  background-size: cover;
+  font-family: 'Orbitron', sans-serif;
+  color: #ff6f00;
+}
+
+  canvas {
+    display: block;
+  }
+
+  #startScreen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    color: #ff6f00;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+    animation: fadeIn 2s ease-in-out;
+    font-family: 'Orbitron', sans-serif;
+    text-align: center;
+  }
+
+    h1, h2 {
+      color: #ff9966;
+      text-shadow: 0 0 10px #ff9966;
+    }
+    button {
+      padding: 1em 2em;
+      margin-top: 1em;
+      font-size: 1.5em;
+      font-family: 'Orbitron', sans-serif;
+      background: linear-gradient(145deg, #ff9966, #cc5200);
+      color: white;
+      border: none;
+      border-radius: 0.5em;
+      cursor: pointer;
+      box-shadow: 0 0 10px #ff9966;
+      transition: transform 0.2s, background 0.3s;
+    }
+    button:hover {
+      transform: scale(1.05);
+      background: linear-gradient(145deg, #cc5200, #ff9966);
+    }
+    button:active {
+      transform: scale(0.98);
+    }
+
+  #startScreen h1 {
+    font-size: 3em;
+    animation: glowEffect 5s infinite alternate;
+  }
+
+  #startButton {
+  all: unset; /* Removes ALL browser default button styles */
+  display: inline-block;
+  padding: 1em 2em;
+  font-size: 1.2em;
+  margin-top: 1em;
+  background-color: rgba(255, 111, 0, 0.2); /* Burnt orange transparent */
+  color: #ff6f00;
+  border: 2px solid #ff6f00;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: center;
+  transition: background-color 0.3s, color 0.3s, box-shadow 0.3s;
+  font-family: 'Orbitron', sans-serif;
+  }
+
+  #startButton:hover {
+    background-color: #ff6f00;
+    color: black;
+    box-shadow: 0 0 15px #ff6f00;
+  }
+
+  #startButton:active {
+    transform: scale(0.98);
+  }
+
+ #scoreDisplay {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.5rem;
+  color: #fff !important;
+  animation: glowEffect 5s linear infinite;
+  text-shadow: 0 0 5px #ff6f00;
+  z-index: 5;
+}
+</style>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap');
+
+
+#Button {
+  all: unset;
+  display: inline-block;
+  padding: 1em 2em;
+  font-size: 1.2em;
+  margin-top: 1em;
+  background-color: rgba(255, 111, 0, 0.2);
+  color: #ff6f00;
+  border: 2px solid #ff6f00;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: center;
+  transition: background-color 0.3s, color 0.3s, box-shadow 0.3s;
+  font-family: 'Orbitron', sans-serif;
+}
+
+#Button:hover {
+  background-color: #ff6f00;
+  color: black;
+  box-shadow: 0 0 15px #ff6f00;
+}
+
+#Button:active {
+  transform: scale(0.98);
+}
+
+#scoreDisplay {
+  font-family: 'Orbitron';
+  color: #ff6f00;
+  font-size: 24px;
+  text-shadow: 0 0 5px #ff6f00;
+}
+</style>
+</head>
+<body>
+<div id="startScreen">
+<h1>SheeTy Abyss</h1>
+<button id="startButton">Start SheeT</button>
+</div>
+<div id="scoreDisplay">Score: 0 | High Score: 0 | Level: 0 
+</div>
+<div id="timerDisplay" style="
+  position: absolute;
+  top: 100px;
+  left: 20px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.5rem;
+  color: #fff !important;
+  animation: glowEffect 5s linear infinite;
+  text-shadow: 0 0 5px #ff6f00;
+  z-index: 5;
+">
+  Time: 100
+</div>
+<div id="healthBarContainer">
+  <div id="healthBar"></div>
+</div>
+<canvas id="gameCanvas"></canvas>
+<style>
+  body {
+    margin: 0;
+    overflow: hidden;
+    background: url('./levels/background.jpg') no-repeat center center fixed;
+    background-size: cover;
+    font-family: Arial, sans-serif;
+    color: white;
+  }
+
+  #startScreen {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    z-index: 10;
+  }
+
+#healthBarContainer {
+  position: absolute;
+  top: 50px;
+  left: 10px;
+  width: 220px;
+  height: 25px;
+  border-radius: 8px;
+  border: 2px solid #ff6f00;
+  background: rgba(0, 0, 0, 0.4);
+  box-shadow: 0 0 15px rgba(255, 140, 26, 0.5);
+  overflow: hidden;
+  z-index: 5;
+}
+
+#healthBar {
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(to right, #00ff00, #88ff00);
+  box-shadow: inset 0 0 10px #ff6f00;
+  transition: width 0.3s ease, background 0.3s ease;
+}
+
+@keyframes flashRed {
+  0%, 100% { background-color: #ff6f00; }
+  50% { background-color: red; }
+}
+
+.flash-hit {
+  animation: flashRed 0.3s ease;
+}
+
+  #startButton,
+#Button {
+  all: unset;
+  display: inline-block;
+  padding: 1em 2em;
+  font-size: 1.2em;
+  margin-top: 1em;
+  background-color: rgba(255, 111, 0, 0.2); /* Burnt orange transparent */
+  color: #ff6f00;
+  border: 2px solid #ff6f00;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: center;
+  transition: background-color 0.3s, color 0.3s, box-shadow 0.3s;
+  font-family: 'Orbitron', sans-serif;
+}
+
+#startButton:hover,
+#Button:hover {
+  background-color: #ff6f00;
+  color: black;
+  box-shadow: 0 0 15px #ff6f00;
+}
+
+#startButton:active,
+#Button:active {
+  transform: scale(0.98);
+} 
+
+button#restartButton,
+#restartButton {
+  all: unset;
+  display: inline-block;
+  padding: 1em 2em;
+  font-size: 1.2em;
+  margin-top: 1em;
+  background-color: rgba(255, 111, 0, 0.2); /* Burnt orange transparent */
+  color: #ff6f00;
+  border: 2px solid #ff6f00;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: center;
+  transition: background-color 0.3s, color 0.3s, box-shadow 0.3s;
+  font-family: 'Orbitron', sans-serif;
+}
+
+button#restartButton:hover,
+#restartButton:hover {
+  background-color: #ff6f00;
+  color: black;
+  box-shadow: 0 0 15px #ff6f00;
+}
+
+button#restartButton:active,
+#restartButton:active {
+  transform: scale(0.98);
+}
+</style>
+<script>
+
   
   // Load sounds
   function createSound(src) {
@@ -52,6 +378,10 @@ let meteorHP = 2;
 let keys = {};
 let shakeTimer = 0;
 let score = 0;
+let timeLeft = 100; // in seconds
+let timerInterval = null;
+let timePowerupsSpawned = 0;
+let maxTimePowerupsPerLevel = 2; // Change as needed
 let flashRed = false;
 let flashTimer = 0;
     let level = 1;
@@ -70,7 +400,7 @@ const brownFragmentImg = new Image();
 brownFragmentImg.src = "./Sprites/meteorBrown_tiny1.png";
     upgradedBulletImg.src = "laserGreen12.png";
     const explosionImg = new Image();
-    explosionImg.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAoCAYAAAD32nqhAAABCElEQVR42qXMPUsCcQDH8d97aGpqampqamprampqamrqARXMyJCMBM+woqGpqamprcWIkgIRkoQbsgiEogf0ztPzzv5d0VC9h+/wWT9aKrm/hBZLzg/xH7QMoeVz1ycUu3DahGKXzguheLnVJJS48u4JJa47NqFkxasRSla7FUIr1W6ZUOqmc0ZoteadElq77Z0QStf9Y0Jp2z8itG73Dwll7vwDQhuN/h6hbCMoEMo+BFuEso9hhtBmM0gRyjUHcUK5p3CBUO7ZzBPKv37MEcq/DWYJWe9mhpDVMtOECu1oilDRjSYJ7XifE4QKvhkntN39HiNUDL5GCe32ohFC+8YME7LCcIj4AxTR+ruOetLeAAAALXRFWHRTb2Z0d2FyZQBieS5ibG9vZGR5LmNyeXB0by5pbWFnZS5QTkcyNEVuY29kZXKoBn/uAAAAAElFTkSuQmCC";
+    explosionImg.src = "./Sprites/Blank.png";
 
 const rogueMeteorImage = new Image();
 rogueMeteorImage.src = "METEORITE-ELEMENTONLY-s.gif";
@@ -101,8 +431,8 @@ const meteorHPByImage = {
     const player = {
       x: canvas.width / 2 - 25,
       y: canvas.height - 100,
-      width: 60,
-      height: 60,
+      width: 80,
+      height: 80,
       speed: 10
     };
 
@@ -221,6 +551,8 @@ if (level >= 6) bg = "./levels/background3.gif";
 function updateScore() {
   if (score >= level * 100 && level < maxLevel) {
     level++;
+    timePowerupsSpawned = 0;
+    timePowerup.spawnTime = Date.now() + 10000 + Math.random() * 5000;
     updateBackground();
 
     // Spawn boss on level 6
@@ -243,7 +575,7 @@ function updateScore() {
   if (score >= 2000 && !boss) {
     gameOver = true;
     document.getElementById("startScreen").style.display = "flex";
-    document.getElementById("startScreen").innerHTML = `<h1>You Win!!</h1><p>Score: ${score}</p><p>High Score: ${highScore}</p><p>Level: ${level}</p><button onclick="location.reload()">Restart</button>`;
+    document.getElementById("startScreen").innerHTML = `<h1>You WON! Good Jeb SheeTy!</h1><p>Score: ${score}</p><p>High Score: ${highScore}</p><p>Level: ${level}</p><button onclick="location.reload()">Restart</button>`;
   }
 
   document.getElementById("scoreDisplay").innerText = `Score: ${score} | High Score: ${highScore} | Level: ${level}`;
@@ -319,7 +651,7 @@ function drawMeteors() {
           let meteorPoints = 0;
 
           // Assign points based on the meteor's size or type
-          if (m.hp > 4) {
+          if (m.hp > 3) {
             meteorPoints = 30;  // Larger meteors or tougher ones give more points
           } else if (m.hp > 2) {
             meteorPoints = 15;  // Medium meteors give a mid-range score
@@ -412,28 +744,19 @@ if (boss) {
   }
 }
     function gameLoop() {
-    if (!canvas || !ctx || !player) {
-        console.error("Missing game setup: canvas, ctx, or player not initialized.");
-        return;
-    }
+      
+      
+ctx.clearRect(0, 0, canvas.width, canvas.height);
+if (gameOver) return;
+handleMovement();
+checkCollisions();
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    if (gameOver) return;
-
-    handleMovement();
-    checkCollisions();
-
-    drawPlayer();
-    drawBullets();
-    drawMeteors();
-    drawBoss();
-    drawEnemyBullets();
-    drawHealthBar();
-
-    drawPowerup();             // <- already being added via wrapper
-    checkUpgradeTimeout();     // <- same
-
-    requestAnimationFrame(gameLoop);
+      drawPlayer();
+      drawBullets();
+      drawMeteors();
+      drawBoss();
+      drawEnemyBullets();
+requestAnimationFrame(gameLoop);
     }
 function drawHealthBar() {
   const barWidth = 200;
@@ -510,28 +833,55 @@ setInterval(() => {
 }, 100);
  // check more often, but shoot every 5s per meteor
 
-window.onload = function () {
-    const startButton = document.getElementById("startButton");
-    if (startButton) {
-        startButton.addEventListener("click", () => {
-            document.getElementById("startScreen").style.display = "none";
-            gameStarted = true;
-            updateBackground();
-            updateScore();
-            startGame();
-        });
-    }
-};
+
+    document.getElementById("startButton").onclick = () => {
+      document.getElementById("startScreen").style.display = "none";
+      gameStarted = true;
+      updateBackground();
+      updateScore();
+      startTimer();
+      gameLoop();
+    };
   
 document.addEventListener('keyup', e => {
   keys[e.code] = false;
 });
 
+function startTimer() {
+  document.getElementById("timerDisplay").innerText = `Time: ${timeLeft}`;
+  timerInterval = setInterval(() => {
+    if (!gameStarted || gameOver) {
+      clearInterval(timerInterval);
+      return;
+    }
+
+    timeLeft--;
+    document.getElementById("timerDisplay").innerText = `Time: ${timeLeft}`;
+    const timerDisplay = document.getElementById("timerDisplay");
+if (timeLeft <= 15) {
+  timerDisplay.classList.add("pulsing");
+} else {
+  timerDisplay.classList.remove("pulsing");
+}
+
+    if (timeLeft <= 0) {
+      clearInterval(timerInterval);
+      gameOver = true;
+      timerDisplay.classList.remove("pulsing");
+      document.getElementById("startScreen").style.display = "flex";
+      document.getElementById("startScreen").innerHTML = `<h1>Time's Up! Game Over!</h1><p>Score: ${score}</p><p>High Score: ${highScore}</p><p>Level: ${level}</p><button onclick="location.reload()">Restart</button>`;
+    }
+  }, 1000);
+}
 function handleMovement() {
   if (keys["ArrowLeft"] || keys["KeyA"]) player.x -= player.speed;
   if (keys["ArrowRight"] || keys["KeyD"]) player.x += player.speed;
   if (keys["ArrowUp"] || keys["KeyW"]) player.y -= player.speed;
   if (keys["ArrowDown"] || keys["KeyS"]) player.y += player.speed;
+  if (player.x < 0) player.x = 0;
+  if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
+  if (player.y < 0) player.y = 0;
+  if (player.y + player.height > canvas.height) player.y = canvas.height - player.height;
 }
 
 function updatePlayerImage() {
@@ -585,8 +935,9 @@ function checkCollisions() {
       playShieldDown();
       if (playerHP <= 0) {
         gameOver = true;
+        timerDisplay.classList.remove("pulsing");
         document.getElementById("startScreen").style.display = "flex";
-        document.getElementById("startScreen").innerHTML = `<h1>Game Over! You Are SheeTy!!</h1><p>Score: ${score}</p><p>High Score: ${highScore}</p><p>Level: ${level}</p><button onclick="location.reload()">Restart</button>`;
+        document.getElementById("startScreen").innerHTML = `<h1>Game Over! You Died SheeTy!!</h1><p>Score: ${score}</p><p>High Score: ${highScore}</p><p>Level: ${level}</p><button onclick="location.reload()">Restart</button>`;
       }
     }
   });
@@ -614,6 +965,7 @@ function startGame() {
         level = 0;
         gameOver = false;
         drawPowerup();
+        drawTimePowerup();
         checkUpgradeTimeout();
         requestAnimationFrame(gameLoop);
     } else {
@@ -624,10 +976,21 @@ let originalGameLoop = gameLoop;
 gameLoop = function () {
     originalGameLoop();
     drawPowerup();
+    drawTimePowerup();
     checkUpgradeTimeout();
 };
 
 // === Powerup and Bullet Upgrade Logic ===
+let timePowerup = {
+  x: Math.random() * canvas.width,
+  y: -50,
+  width: 32,
+  height: 32,
+  image: new Image(),
+  active: false,
+  spawnTime: Date.now() + 20000 + Math.random() * 15000 
+};
+timePowerup.image.src = "./sprites/powerupGreen_star.png";
 
 let powerup = {
     x: Math.random() * canvas.width,
@@ -678,6 +1041,58 @@ function drawPowerup() {
     }
 }
 
+function drawTimePowerup() {
+  const now = Date.now();
+
+  // Only spawn if:
+  // - Time to spawn has passed
+  // - Powerup isn't active
+  // - Fewer than the max allowed have spawned this level
+  if (
+    now > timePowerup.spawnTime &&
+    !timePowerup.active &&
+    timePowerupsSpawned < maxTimePowerupsPerLevel
+  ) {
+    timePowerup.x = Math.random() * (canvas.width - timePowerup.width);
+    timePowerup.y = -50;
+    timePowerup.active = true;
+    timePowerupsSpawned++;
+  }
+
+  if (timePowerup.active) {
+    timePowerup.y += 2;
+    ctx.drawImage(timePowerup.image, timePowerup.x, timePowerup.y, timePowerup.width, timePowerup.height);
+
+    // Collision with player
+    if (
+      player.x < timePowerup.x + timePowerup.width &&
+      player.x + player.width > timePowerup.x &&
+      player.y < timePowerup.y + timePowerup.height &&
+      player.y + player.height > timePowerup.y
+    ) {
+      timePowerup.active = false;
+      timeLeft += 25;
+      if (timeLeft > 999) timeLeft = 999;
+
+      const timerDisplay = document.getElementById("timerDisplay");
+      timerDisplay.innerText = `Time: ${timeLeft}`;
+      timerDisplay.classList.add("flash");
+      setTimeout(() => timerDisplay.classList.remove("flash"), 3000);
+
+      playShieldUp();
+
+      // Set a new delayed spawn time (no back-to-back spawn)
+      timePowerup.spawnTime = now + 15000 + Math.random() * 10000; // 15–25 sec delay
+    }
+
+    // Despawn if off screen
+    if (timePowerup.y > canvas.height) {
+      timePowerup.active = false;
+      // Set delayed spawn time even if missed
+      timePowerup.spawnTime = now + 15000 + Math.random() * 10000;
+    }
+  }
+}
 
 
 function drawEnemyBullets() {
@@ -702,8 +1117,9 @@ b.y += b.vy;
 
       if (playerHP <= 0) {
         gameOver = true;
+        timerDisplay.classList.remove("pulsing");
         document.getElementById("startScreen").style.display = "flex";
-        document.getElementById("startScreen").innerHTML = `<h1>Game Over! You Are SheeTy!!</h1><p>Score: ${score}</p><p>High Score: ${highScore}</p><p>Level: ${level}</p><button onclick="location.reload()">Restart</button>`;
+        document.getElementById("startScreen").innerHTML = `<h1>Game Over! You Died SheeTy!!</h1><p>Score: ${score}</p><p>High Score: ${highScore}</p><p>Level: ${level}</p><button onclick="location.reload()">Restart</button>`;
       }
     }
 
@@ -713,14 +1129,7 @@ b.y += b.vy;
   }
 }
 
-window.addEventListener('DOMContentLoaded', () => {
-  const startButton = document.getElementById("startButton");
-  if (startButton) {
-    startButton.addEventListener("click", () => {
-      document.getElementById("startScreen").style.display = "none";
-      startGame();
-    });
-  } else {
-    console.warn("Start button not found.");
-  }
-});
+</script>
+
+</body>
+</html>
