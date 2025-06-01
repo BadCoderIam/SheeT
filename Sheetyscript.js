@@ -1,5 +1,75 @@
-  
+  function drawMeteors() {
+  for (let mi = meteors.length - 1; mi >= 0; mi--) {
+    const m = meteors[mi];
+
+    // Update meteor position based on velocity or speed
+    m.x += m.vx || 0; // Update horizontal position (if rogue meteor)
+    m.y += m.vy || m.speed || 0; // Update vertical position (if rogue meteor or regular)
+
+    // Remove meteor if it's off-screen
+    if (
+      m.x + m.width < 0 || m.x > canvas.width || 
+      m.y + m.height < 0 || m.y > canvas.height
+    ) {
+      meteors.splice(mi, 1); // Remove the meteor from the array
+      continue; // Skip this iteration of the loop
+    }
+
+    // Draw the meteor image at its current position
+    ctx.drawImage(m.img, m.x, m.y, m.width, m.height);
+
+    for (let bi = bullets.length - 1; bi >= 0; bi--) {
+      const b = bullets[bi];
+      if (
+        b.x < m.x + m.width &&
+        b.x + b.width > m.x &&
+        b.y < m.y + m.height &&
+        b.y + b.height > m.y
+      ) {
+        m.hp--;
+        bullets.splice(bi, 1);
+        ctx.drawImage(explosionImg, m.x, m.y, m.width, m.height);
+        playExplosion();
+
+        if (m.hp <= 0) {
+          let meteorPoints = 0;
+
+          // Assign points based on the meteor's size or type
+          if (m.hp > 4) {
+            meteorPoints = 30;  // Larger meteors or tougher ones give more points
+          } else if (m.hp > 2) {
+            meteorPoints = 15;  // Medium meteors give a mid-range score
+          } else {
+            meteorPoints = 5;  // Smaller or weaker meteors give the base score
+          }
+
+          if (m.img.src.includes("meteorGrey_big1.png")) {
+            spawnFragments(m.x, m.y, fragmentImg);
+          } else if (m.img.src.includes("meteorBrown_big2.png")) {
+            spawnFragments(m.x, m.y, brownFragmentImg);
+          }
+          meteors.splice(mi, 1);
+          score += meteorPoints;  // Add the points based on the meteor's HP
+          updateScore();
+        }
+
+        if (score > highScore) {
+          highScore = score;
+          localStorage.setItem('highScore', highScore);
+        }
+
+        break; // exit bullet loop after hit
+      }
+    }
+
+    if (m.y > canvas.height) {
+      meteors.splice(mi, 1);
+    }
+  }
+}
   // Load sounds
+  
+  
   function createSound(src) {
     const audio = new Audio(src);
     return () => {
@@ -435,6 +505,7 @@ if (boss) {
 
     requestAnimationFrame(gameLoop);
     }
+    
 function drawHealthBar() {
   const barWidth = 200;
   const barHeight = 25;
@@ -517,6 +588,7 @@ window.onload = function () {
             document.getElementById("startScreen").style.display = "none";
             gameStarted = true;
             updateBackground();
+            drawMeteors();
             updateScore();
             startGame();
         });
@@ -613,6 +685,7 @@ function startGame() {
         score = 0;
         level = 0;
         gameOver = false;
+        drawMeteors();
         drawPowerup();
         checkUpgradeTimeout();
         requestAnimationFrame(gameLoop);
@@ -623,6 +696,7 @@ function startGame() {
 let originalGameLoop = gameLoop;
 gameLoop = function () {
     originalGameLoop();
+    drawMeteors();
     drawPowerup();
     checkUpgradeTimeout();
 };
@@ -724,3 +798,5 @@ window.addEventListener('DOMContentLoaded', () => {
     console.warn("Start button not found.");
   }
 });
+
+window.startGame = drawMeteors;

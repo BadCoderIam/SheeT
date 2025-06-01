@@ -13,14 +13,40 @@
     100% { opacity: 1; }
   }
 
-  @keyframes glowEffect {
-    0% {
-      text-shadow: 0 0 5px #ff6f00, 0 0 10px #ff6f00, 0 0 20px #ff6f00;
-    }
-    100% {
-      text-shadow: 0 0 10px #ffa500, 0 0 20px #ffa500, 0 0 30px #ffa500;
-    }
+@keyframes flashTimer {
+  0%, 100% { transform: scale(1); color: #07f322; text-shadow: 0 0 5px #ff6f00; }
+  50% { transform: scale(1.5); color: rgb(40, 9, 247); text-shadow: 0 0 15px #ffff00, 0 0 25px #ffaa00; }
+}
+
+@keyframes glowEffect {
+  0% {
+    text-shadow: 0 0 5px #ff6f00, 0 0 10px #ff6f00, 0 0 20px #ff6f00;
   }
+  100% {
+    text-shadow: 0 0 10px #ffa500, 0 0 20px #ffa500, 0 0 30px #ffa500;
+  }
+}
+
+@keyframes pulseTimer {
+  0%   { transform: scale(1);   color: rgb(255, 0, 208); }
+  50%  { transform: scale(1.5); color: #ff3333; text-shadow: 0 0 10px #ff3333; }
+  100% { transform: scale(1);   color: rgb(255, 2, 179); }
+}
+
+/* Always-on glow */
+#timerDisplay {
+  animation: glowEffect 5s linear infinite;
+}
+
+/* Pulse added when timeLeft <= 10 */
+#timerDisplay.pulsing {
+  animation: glowEffect 5s linear infinite, pulseTimer 1s infinite !important;
+}
+
+/* Flash overrides all temporarily */
+#timerDisplay.flash {
+  animation: flashTimer 1s ease-in-out 3 !important;
+}
 
   html, body {
   margin: 0;
@@ -126,6 +152,7 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap');
 
+
 #Button {
   all: unset;
   display: inline-block;
@@ -166,6 +193,19 @@
 <button id="startButton">Start SheeT</button>
 </div>
 <div id="scoreDisplay">Score: 0 | High Score: 0 | Level: 0 
+</div>
+<div id="timerDisplay" style="
+  position: absolute;
+  top: 100px;
+  left: 20px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.5rem;
+  color: #fff !important;
+  animation: glowEffect 5s linear infinite;
+  text-shadow: 0 0 5px #ff6f00;
+  z-index: 5;
+">
+  Time: 100
 </div>
 <div id="healthBarContainer">
   <div id="healthBar"></div>
@@ -338,6 +378,10 @@ let meteorHP = 2;
 let keys = {};
 let shakeTimer = 0;
 let score = 0;
+let timeLeft = 100; // in seconds
+let timerInterval = null;
+let timePowerupsSpawned = 0;
+let maxTimePowerupsPerLevel = 2; // Change as needed
 let flashRed = false;
 let flashTimer = 0;
     let level = 1;
@@ -356,7 +400,7 @@ const brownFragmentImg = new Image();
 brownFragmentImg.src = "./Sprites/meteorBrown_tiny1.png";
     upgradedBulletImg.src = "laserGreen12.png";
     const explosionImg = new Image();
-    explosionImg.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAoCAYAAAD32nqhAAABCElEQVR42qXMPUsCcQDH8d97aGpqampqamprampqamrqARXMyJCMBM+woqGpqamprcWIkgIRkoQbsgiEogf0ztPzzv5d0VC9h+/wWT9aKrm/hBZLzg/xH7QMoeVz1ycUu3DahGKXzguheLnVJJS48u4JJa47NqFkxasRSla7FUIr1W6ZUOqmc0ZoteadElq77Z0QStf9Y0Jp2z8itG73Dwll7vwDQhuN/h6hbCMoEMo+BFuEso9hhtBmM0gRyjUHcUK5p3CBUO7ZzBPKv37MEcq/DWYJWe9mhpDVMtOECu1oilDRjSYJ7XifE4QKvhkntN39HiNUDL5GCe32ohFC+8YME7LCcIj4AxTR+ruOetLeAAAALXRFWHRTb2Z0d2FyZQBieS5ibG9vZGR5LmNyeXB0by5pbWFnZS5QTkcyNEVuY29kZXKoBn/uAAAAAElFTkSuQmCC";
+    explosionImg.src = "./Sprites/Blank.png";
 
 const rogueMeteorImage = new Image();
 rogueMeteorImage.src = "METEORITE-ELEMENTONLY-s.gif";
@@ -387,8 +431,8 @@ const meteorHPByImage = {
     const player = {
       x: canvas.width / 2 - 25,
       y: canvas.height - 100,
-      width: 60,
-      height: 60,
+      width: 80,
+      height: 80,
       speed: 10
     };
 
@@ -507,6 +551,8 @@ if (level >= 6) bg = "./levels/background3.gif";
 function updateScore() {
   if (score >= level * 100 && level < maxLevel) {
     level++;
+    timePowerupsSpawned = 0;
+    timePowerup.spawnTime = Date.now() + 10000 + Math.random() * 5000;
     updateBackground();
 
     // Spawn boss on level 6
@@ -529,7 +575,7 @@ function updateScore() {
   if (score >= 2000 && !boss) {
     gameOver = true;
     document.getElementById("startScreen").style.display = "flex";
-    document.getElementById("startScreen").innerHTML = `<h1>You Win!!</h1><p>Score: ${score}</p><p>High Score: ${highScore}</p><p>Level: ${level}</p><button onclick="location.reload()">Restart</button>`;
+    document.getElementById("startScreen").innerHTML = `<h1>You WON! Good Jeb SheeTy!</h1><p>Score: ${score}</p><p>High Score: ${highScore}</p><p>Level: ${level}</p><button onclick="location.reload()">Restart</button>`;
   }
 
   document.getElementById("scoreDisplay").innerText = `Score: ${score} | High Score: ${highScore} | Level: ${level}`;
@@ -605,7 +651,7 @@ function drawMeteors() {
           let meteorPoints = 0;
 
           // Assign points based on the meteor's size or type
-          if (m.hp > 4) {
+          if (m.hp > 3) {
             meteorPoints = 30;  // Larger meteors or tougher ones give more points
           } else if (m.hp > 2) {
             meteorPoints = 15;  // Medium meteors give a mid-range score
@@ -793,6 +839,7 @@ setInterval(() => {
       gameStarted = true;
       updateBackground();
       updateScore();
+      startTimer();
       gameLoop();
     };
   
@@ -800,11 +847,41 @@ document.addEventListener('keyup', e => {
   keys[e.code] = false;
 });
 
+function startTimer() {
+  document.getElementById("timerDisplay").innerText = `Time: ${timeLeft}`;
+  timerInterval = setInterval(() => {
+    if (!gameStarted || gameOver) {
+      clearInterval(timerInterval);
+      return;
+    }
+
+    timeLeft--;
+    document.getElementById("timerDisplay").innerText = `Time: ${timeLeft}`;
+    const timerDisplay = document.getElementById("timerDisplay");
+if (timeLeft <= 15) {
+  timerDisplay.classList.add("pulsing");
+} else {
+  timerDisplay.classList.remove("pulsing");
+}
+
+    if (timeLeft <= 0) {
+      clearInterval(timerInterval);
+      gameOver = true;
+      timerDisplay.classList.remove("pulsing");
+      document.getElementById("startScreen").style.display = "flex";
+      document.getElementById("startScreen").innerHTML = `<h1>Time's Up! Game Over!</h1><p>Score: ${score}</p><p>High Score: ${highScore}</p><p>Level: ${level}</p><button onclick="location.reload()">Restart</button>`;
+    }
+  }, 1000);
+}
 function handleMovement() {
   if (keys["ArrowLeft"] || keys["KeyA"]) player.x -= player.speed;
   if (keys["ArrowRight"] || keys["KeyD"]) player.x += player.speed;
   if (keys["ArrowUp"] || keys["KeyW"]) player.y -= player.speed;
   if (keys["ArrowDown"] || keys["KeyS"]) player.y += player.speed;
+  if (player.x < 0) player.x = 0;
+  if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
+  if (player.y < 0) player.y = 0;
+  if (player.y + player.height > canvas.height) player.y = canvas.height - player.height;
 }
 
 function updatePlayerImage() {
@@ -858,8 +935,9 @@ function checkCollisions() {
       playShieldDown();
       if (playerHP <= 0) {
         gameOver = true;
+        timerDisplay.classList.remove("pulsing");
         document.getElementById("startScreen").style.display = "flex";
-        document.getElementById("startScreen").innerHTML = `<h1>Game Over! You Are SheeTy!!</h1><p>Score: ${score}</p><p>High Score: ${highScore}</p><p>Level: ${level}</p><button onclick="location.reload()">Restart</button>`;
+        document.getElementById("startScreen").innerHTML = `<h1>Game Over! You Died SheeTy!!</h1><p>Score: ${score}</p><p>High Score: ${highScore}</p><p>Level: ${level}</p><button onclick="location.reload()">Restart</button>`;
       }
     }
   });
@@ -887,6 +965,7 @@ function startGame() {
         level = 0;
         gameOver = false;
         drawPowerup();
+        drawTimePowerup();
         checkUpgradeTimeout();
         requestAnimationFrame(gameLoop);
     } else {
@@ -897,10 +976,21 @@ let originalGameLoop = gameLoop;
 gameLoop = function () {
     originalGameLoop();
     drawPowerup();
+    drawTimePowerup();
     checkUpgradeTimeout();
 };
 
 // === Powerup and Bullet Upgrade Logic ===
+let timePowerup = {
+  x: Math.random() * canvas.width,
+  y: -50,
+  width: 32,
+  height: 32,
+  image: new Image(),
+  active: false,
+  spawnTime: Date.now() + 20000 + Math.random() * 15000 
+};
+timePowerup.image.src = "./sprites/powerupGreen_star.png";
 
 let powerup = {
     x: Math.random() * canvas.width,
@@ -951,6 +1041,58 @@ function drawPowerup() {
     }
 }
 
+function drawTimePowerup() {
+  const now = Date.now();
+
+  // Only spawn if:
+  // - Time to spawn has passed
+  // - Powerup isn't active
+  // - Fewer than the max allowed have spawned this level
+  if (
+    now > timePowerup.spawnTime &&
+    !timePowerup.active &&
+    timePowerupsSpawned < maxTimePowerupsPerLevel
+  ) {
+    timePowerup.x = Math.random() * (canvas.width - timePowerup.width);
+    timePowerup.y = -50;
+    timePowerup.active = true;
+    timePowerupsSpawned++;
+  }
+
+  if (timePowerup.active) {
+    timePowerup.y += 2;
+    ctx.drawImage(timePowerup.image, timePowerup.x, timePowerup.y, timePowerup.width, timePowerup.height);
+
+    // Collision with player
+    if (
+      player.x < timePowerup.x + timePowerup.width &&
+      player.x + player.width > timePowerup.x &&
+      player.y < timePowerup.y + timePowerup.height &&
+      player.y + player.height > timePowerup.y
+    ) {
+      timePowerup.active = false;
+      timeLeft += 25;
+      if (timeLeft > 999) timeLeft = 999;
+
+      const timerDisplay = document.getElementById("timerDisplay");
+      timerDisplay.innerText = `Time: ${timeLeft}`;
+      timerDisplay.classList.add("flash");
+      setTimeout(() => timerDisplay.classList.remove("flash"), 3000);
+
+      playShieldUp();
+
+      // Set a new delayed spawn time (no back-to-back spawn)
+      timePowerup.spawnTime = now + 15000 + Math.random() * 10000; // 15–25 sec delay
+    }
+
+    // Despawn if off screen
+    if (timePowerup.y > canvas.height) {
+      timePowerup.active = false;
+      // Set delayed spawn time even if missed
+      timePowerup.spawnTime = now + 15000 + Math.random() * 10000;
+    }
+  }
+}
 
 
 function drawEnemyBullets() {
@@ -975,8 +1117,9 @@ b.y += b.vy;
 
       if (playerHP <= 0) {
         gameOver = true;
+        timerDisplay.classList.remove("pulsing");
         document.getElementById("startScreen").style.display = "flex";
-        document.getElementById("startScreen").innerHTML = `<h1>Game Over! You Are SheeTy!!</h1><p>Score: ${score}</p><p>High Score: ${highScore}</p><p>Level: ${level}</p><button onclick="location.reload()">Restart</button>`;
+        document.getElementById("startScreen").innerHTML = `<h1>Game Over! You Died SheeTy!!</h1><p>Score: ${score}</p><p>High Score: ${highScore}</p><p>Level: ${level}</p><button onclick="location.reload()">Restart</button>`;
       }
     }
 

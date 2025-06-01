@@ -387,19 +387,10 @@ const meteorHPByImage = {
     const player = {
       x: canvas.width / 2 - 25,
       y: canvas.height - 100,
-      width: 60,
-      height: 60,
+      width: 80,
+      height: 80,
       speed: 10
     };
-
-window.addEventListener("resize", () => {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-
-  // Optional: Keep player inside new bounds
-  player.x = Math.min(canvas.width - player.width, player.x);
-  player.y = Math.min(canvas.height - player.height, player.y);
-});
 
     const bullets = [];
     const meteors = [];
@@ -814,8 +805,10 @@ function handleMovement() {
   if (keys["ArrowRight"] || keys["KeyD"]) player.x += player.speed;
   if (keys["ArrowUp"] || keys["KeyW"]) player.y -= player.speed;
   if (keys["ArrowDown"] || keys["KeyS"]) player.y += player.speed;
-player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
-player.y = Math.max(0, Math.min(canvas.height - player.height, player.y));
+  if (player.x < 0) player.x = 0;
+  if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
+  if (player.y < 0) player.y = 0;
+  if (player.y + player.height > canvas.height) player.y = canvas.height - player.height;
 }
 
 function updatePlayerImage() {
