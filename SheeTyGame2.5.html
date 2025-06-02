@@ -194,21 +194,17 @@
 </div>
 <div id="scoreDisplay">Score: 0 | High Score: 0 | Level: 0 
 </div>
-<div id="timerDisplay" style="
-  position: absolute;
-  top: 100px;
-  left: 20px;
-  font-family: 'Orbitron', sans-serif;
-  font-size: 1.5rem;
-  color: #fff !important;
-  animation: glowEffect 5s linear infinite;
-  text-shadow: 0 0 5px #ff6f00;
-  z-index: 5;
-">
-  Time: 100
-</div>
 <div id="healthBarContainer">
+  <div id="healthIcon">🛡️</div>
   <div id="healthBar"></div>
+</div>
+
+<div id="timerDisplay">
+  <div id="timerIcon">⏱️</div>
+  <div id="timerText">Time: 100</div>
+</div>
+<div id="ammoDisplay">
+  🔫 Ammo: 500
 </div>
 <canvas id="gameCanvas"></canvas>
 <style>
@@ -236,23 +232,79 @@
 #healthBarContainer {
   position: absolute;
   top: 50px;
-  left: 10px;
-  width: 220px;
-  height: 25px;
-  border-radius: 8px;
-  border: 2px solid #ff6f00;
-  background: rgba(0, 0, 0, 0.4);
-  box-shadow: 0 0 15px rgba(255, 140, 26, 0.5);
+  left: 20px;
+  /* Remove fixed width: */
+  /* width: 300px; */
+  height: 35px;
+  border-radius: 10px;
+  border: 3px solid #ffffff;
+  background: #222222cc;
+  box-shadow: 0 0 15px #ff6f00;
   overflow: hidden;
-  z-index: 5;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  padding-left: 10px;
+  transition: width 0.3s ease;
 }
 
 #healthBar {
   height: 100%;
   width: 100%;
-  background: linear-gradient(to right, #00ff00, #88ff00);
-  box-shadow: inset 0 0 10px #ff6f00;
-  transition: width 0.3s ease, background 0.3s ease;
+  transition: width 0.3s ease;
+  box-shadow: inset 0 0 12px #ff6f00;
+  border-radius: 10px;
+}
+
+#healthIcon {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 22px;           /* Increased from 16px */
+  color: #ffffff;
+  margin-right: 10px;
+}
+
+#ammoDisplay {
+  position: absolute;
+  top: 160px;
+  left: 20px;
+  width: 140px;
+  height: 30px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 16px;
+  color: #ffffff;
+  background: #222222cc;                  /* Match timer background */
+  border: 3px solid #ffffff;
+  padding: 6px 10px;
+  border-radius: 8px;
+  box-shadow: 0 0 15px #ff6f00;           /* Glow effect around the box */
+  text-shadow: 0 0 5px #ff6f00;           /* Text glow to match timer */
+  display: flex;
+  align-items: center;
+  z-index: 10;
+}
+
+#timerDisplay {
+  position: absolute;
+  top: 100px;
+  left: 20px;
+  width: 140px;              /* Increased from 120px */
+  height: 30px;              /* Increased from 15px */
+  font-family: 'Orbitron', sans-serif;
+  font-size: 18px;           /* Increased from 16px */
+  color: #ffffff;
+  background: #222222cc;
+  border: 3px solid #ffffff;
+  padding: 6px 10px;
+  border-radius: 8px;
+  box-shadow: 0 0 15px #ff6f00;
+  display: flex;
+  align-items: center;
+  z-index: 10;
+}
+
+#timerIcon {
+  margin-right: 10px;
+  font-size: 20px;
 }
 
 @keyframes flashRed {
@@ -375,6 +427,8 @@ let gameStarted = false;
 let gameOver = false;
 let playerHP = 20;
 let meteorHP = 2;
+let ammo = 500;
+const maxAmmo = 500;
 let keys = {};
 let shakeTimer = 0;
 let score = 0;
@@ -504,34 +558,18 @@ enemyBulletImg.src = "./sprites/laserGreen12.png";
 document.addEventListener('keydown', e => {
   keys[e.code] = true;
 
-  if (e.code === "Space") {
+  if (e.code === "Space" && ammo > 0) {
     if (upgraded) {
-      // Fire two bullets
-      bullets.push({
-        x: player.x + player.width / 2 - 15,
-        y: player.y,
-        width: 10,
-        height: 20,
-        speed: 8
-      });
-      bullets.push({
-        x: player.x + player.width / 2 + 5,
-        y: player.y,
-        width: 10,
-        height: 20,
-        speed: 8
-      });
+      bullets.push({ x: player.x + player.width / 2 - 15, y: player.y, width: 10, height: 20, speed: 8 });
+      bullets.push({ x: player.x + player.width / 2 + 5, y: player.y, width: 10, height: 20, speed: 8 });
+      ammo -= 2;
     } else {
-      // Fire one bullet
-      bullets.push({
-        x: player.x + player.width / 2 - 5,
-        y: player.y,
-        width: 10,
-        height: 20,
-        speed: 8
-      });
+      bullets.push({ x: player.x + player.width / 2 - 5, y: player.y, width: 10, height: 20, speed: 8 });
+      ammo--;
     }
+
     playLaser();
+    updateAmmoDisplay();
   }
 });
 function updateBackground() {
@@ -593,7 +631,12 @@ function updateScore() {
         if (b.y < 0) bullets.splice(i, 1);
       });
     }
-
+function checkUpgradeTimeout() {
+  if (upgraded && Date.now() > upgradeEndTime) {
+    upgraded = false;
+    setBulletImg(false); // switch to default bullet
+  }
+}
     
 function spawnFragments(x, y, fragmentImage) {
   for (let i = 0; i < 3; i++) {
@@ -873,6 +916,7 @@ setInterval(() => {
       updateBackground();
       updateScore();
       startTimer();
+      updateAmmoDisplay();
       gameLoop();
     };
   
@@ -881,7 +925,7 @@ document.addEventListener('keyup', e => {
 });
 
 function startTimer() {
-  document.getElementById("timerDisplay").innerText = `Time: ${timeLeft}`;
+  document.getElementById("timerText").innerText = `Time: ${timeLeft}`;
   timerInterval = setInterval(() => {
     if (!gameStarted || gameOver) {
       clearInterval(timerInterval);
@@ -889,8 +933,8 @@ function startTimer() {
     }
 
     timeLeft--;
-    document.getElementById("timerDisplay").innerText = `Time: ${timeLeft}`;
-    const timerDisplay = document.getElementById("timerDisplay");
+    document.getElementById("timerText").innerText = `Time: ${timeLeft}`;
+    const timerDisplay = document.getElementById("timerText");
 if (timeLeft <= 15) {
   timerDisplay.classList.add("pulsing");
 } else {
@@ -902,7 +946,7 @@ if (timeLeft <= 15) {
       gameOver = true;
       timerDisplay.classList.remove("pulsing");
       document.getElementById("startScreen").style.display = "flex";
-      document.getElementById("startScreen").innerHTML = `<h1>Time's Up! Game Over!</h1><p>Score: ${score}</p><p>High Score: ${highScore}</p><p>Level: ${level}</p><button onclick="location.reload()">Restart</button>`;
+      document.getElementById("startScreen").innerHTML = `<h1>Time's Up Piece of SHeeT! Game Over!</h1><p>Score: ${score}</p><p>High Score: ${highScore}</p><p>Level: ${level}</p><button onclick="location.reload()">Restart</button>`;
     }
   }, 1000);
 }
@@ -915,6 +959,10 @@ function handleMovement() {
   if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
   if (player.y < 0) player.y = 0;
   if (player.y + player.height > canvas.height) player.y = canvas.height - player.height;
+}
+
+function updateAmmoDisplay() {
+  document.getElementById('ammoDisplay').innerText = `🔫 Ammo: ${ammo}`;
 }
 
 function updatePlayerImage() {
@@ -935,14 +983,32 @@ function updatePlayerImage() {
     playerImg = playerImagesByHP[20]; // Full HP image
   }
 }
+const maxHP = 20;
+const maxBarWidth = 300;
+
 function updateHealthBar() {
   const bar = document.getElementById('healthBar');
-  if (bar) {
-    const width = (playerHP / 20) * 100;
-    bar.style.width = width + '%';
-    bar.classList.add('flash-hit');
-    setTimeout(() => bar.classList.remove('flash-hit'), 300);
+  const container = document.getElementById('healthBarContainer');
+  const percent = Math.max(0, playerHP / maxHP);
+
+  // Update fill bar
+  const fillWidth = percent * (maxBarWidth - 10); // subtract padding/margin if needed
+  bar.style.width = fillWidth + "px";
+
+  // Update border container width
+  const containerWidth = percent * maxBarWidth;
+  container.style.width = containerWidth + "px";
+
+  // Color logic
+  let barColor = "#00ff00";
+  if (percent <= 0.35) {
+    const strobe = Math.floor(Date.now() / 100) % 2 === 0;
+    barColor = strobe ? "#ff0000" : "#880000";
+  } else if (percent <= 0.7) {
+    barColor = "#ffa500";
   }
+
+  bar.style.backgroundColor = barColor;
 }
 
 function updateBossImage(bossHP) {
@@ -983,13 +1049,75 @@ function drawPlayer() {
     offsetY = Math.random() * 10 - 5;
     shakeTimer--;
   }
-  ctx.drawImage(playerImg, player.x + offsetX, player.y + offsetY, player.width, player.height);
-}
-function checkUpgradeTimeout() {
-  if (upgraded && Date.now() > upgradeEndTime) {
-    upgraded = false;
-    setBulletImg(false); // switch to default bullet
+  const drawX = player.x + offsetX;
+  const drawY = player.y + offsetY;
+
+  // Draw the player ship
+  ctx.drawImage(playerImg, drawX, drawY, player.width, player.height);
+
+    // === Layout constants ===
+  const iconSize = 16;
+  const spacing = 4;
+  const hpBarWidth = player.width;
+  const hpBarHeight = 10;
+  const timeBarHeight = 6;
+
+  // === HP Bar with strobe effect ===
+  const hpBarX = drawX + iconSize + spacing;
+  const hpBarY = drawY + player.height + spacing;
+  const healthPercent = playerHP / 20;
+
+  let barColor = "#00ff00"; // Default: green
+  if (healthPercent <= 0.35) {
+    const strobe = Math.floor(Date.now() / 100) % 2 === 0;
+    barColor = strobe ? "#ff0000" : "#880000";
+  } else if (healthPercent <= 0.7) {
+    barColor = "#ffa500"; // Orange
   }
+
+  // Background
+  ctx.fillStyle = "#222";
+  ctx.fillRect(hpBarX, hpBarY, hpBarWidth, hpBarHeight);
+
+  // Fill
+  ctx.fillStyle = barColor;
+  ctx.fillRect(hpBarX, hpBarY, hpBarWidth * healthPercent, hpBarHeight);
+
+  // Border
+  ctx.strokeStyle = "#fff";
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(hpBarX, hpBarY, hpBarWidth, hpBarHeight);
+
+  // 🛡️ Icon
+  ctx.font = `${iconSize}px Orbitron`;
+  ctx.fillStyle = "#ffffff";
+  ctx.fillText("🛡️", drawX, hpBarY + hpBarHeight);
+
+  // === Time Bar with same styling ===
+  const timeBarX = drawX + iconSize + spacing;
+  const timeBarY = hpBarY + hpBarHeight + spacing;
+  const timePercent = Math.min(timeLeft / 100, 1);
+
+  let timeColor = "#ffcc00";
+  if (timeLeft <= 15) {
+    const pulse = Math.floor(Date.now() / 250) % 2 === 0;
+    timeColor = pulse ? "#ff0000" : "#aa0000";
+  }
+
+  ctx.fillStyle = "#222";
+  ctx.fillRect(timeBarX, timeBarY, hpBarWidth, timeBarHeight);
+
+  ctx.fillStyle = timeColor;
+  ctx.fillRect(timeBarX, timeBarY, hpBarWidth * timePercent, timeBarHeight);
+
+  ctx.strokeStyle = "#fff";
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(timeBarX, timeBarY, hpBarWidth, timeBarHeight);
+
+  // ⏱️ Icon
+  ctx.font = `${iconSize}px Orbitron`;
+  ctx.fillStyle = "#ffffff";
+  ctx.fillText("⏱️", drawX, timeBarY + timeBarHeight);
 }
 
 function startGame() {
@@ -999,6 +1127,8 @@ function startGame() {
         gameOver = false;
         drawPowerup();
         drawTimePowerup();
+        updateHealthBar();
+        updateAmmoDisplay();
         checkUpgradeTimeout();
         requestAnimationFrame(gameLoop);
     } else {
@@ -1010,6 +1140,8 @@ gameLoop = function () {
     originalGameLoop();
     drawPowerup();
     drawTimePowerup();
+    updateHealthBar();
+    updateAmmoDisplay();
     checkUpgradeTimeout();
 };
 
@@ -1046,32 +1178,39 @@ function setBulletImg(upgraded) {
 
 // Spawn and draw powerup
 function drawPowerup() {
-    if (Date.now() > powerup.spawnTime && !powerup.active) {
-        powerup.x = Math.random() * (canvas.width - powerup.width);
-        powerup.y = -50;
-        powerup.active = true;
+  if (Date.now() > powerup.spawnTime && !powerup.active) {
+    powerup.x = Math.random() * (canvas.width - powerup.width);
+    powerup.y = -50;
+    powerup.active = true;
+  }
+
+  if (powerup.active) {
+    powerup.y += 2;
+    ctx.drawImage(powerup.image, powerup.x, powerup.y, powerup.width, powerup.height);
+
+    // Collision with player
+    if (
+      player.x < powerup.x + powerup.width &&
+      player.x + player.width > powerup.x &&
+      player.y < powerup.y + powerup.height &&
+      player.y + player.height > powerup.y
+    ) {
+      powerup.active = false;
+
+      // Enable bullet upgrade
+      upgraded = true;
+      upgradeEndTime = Date.now() + 10000; // 10 seconds
+      ammo = Math.min(ammo + 250, maxAmmo);
+      updateAmmoDisplay();
+      setBulletImage(true);
+      playShieldUp();
     }
-    if (powerup.active) {
-        powerup.y += 2;
-        ctx.drawImage(powerup.image, powerup.x, powerup.y, powerup.width, powerup.height);
-        // Collision with player
-        if (
-            player.x < powerup.x + powerup.width &&
-            player.x + player.width > powerup.x &&
-            player.y < powerup.y + powerup.height &&
-            player.y + player.height > powerup.y
-        ) {
-            powerup.active = false;
-            upgraded = true;
-            upgradeEndTime = Date.now() + 10000;  // 10 seconds
-            setBulletImage(true);
-            playShieldUp();
-        }
-        // Despawn if off screen
-        if (powerup.y > canvas.height) {
-            powerup.active = false;
-        }
+
+    // Despawn if off screen
+    if (powerup.y > canvas.height) {
+      powerup.active = false;
     }
+  }
 }
 
 function drawTimePowerup() {
@@ -1107,7 +1246,11 @@ function drawTimePowerup() {
       timeLeft += 25;
       if (timeLeft > 999) timeLeft = 999;
 
-      const timerDisplay = document.getElementById("timerDisplay");
+      playerHP = Math.min(playerHP + 4, 20);
+       updateHealthBar();      // Updates HUD
+       updatePlayerImage(); 
+
+      const timerDisplay = document.getElementById("timerText");
       timerDisplay.innerText = `Time: ${timeLeft}`;
       timerDisplay.classList.add("flash");
       setTimeout(() => timerDisplay.classList.remove("flash"), 3000);
