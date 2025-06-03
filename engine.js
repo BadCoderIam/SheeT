@@ -1,75 +1,9 @@
-  function drawMeteors() {
-  for (let mi = meteors.length - 1; mi >= 0; mi--) {
-    const m = meteors[mi];
+// engine.js (core game logic)
+(function () {
 
-    // Update meteor position based on velocity or speed
-    m.x += m.vx || 0; // Update horizontal position (if rogue meteor)
-    m.y += m.vy || m.speed || 0; // Update vertical position (if rogue meteor or regular)
 
-    // Remove meteor if it's off-screen
-    if (
-      m.x + m.width < 0 || m.x > canvas.width || 
-      m.y + m.height < 0 || m.y > canvas.height
-    ) {
-      meteors.splice(mi, 1); // Remove the meteor from the array
-      continue; // Skip this iteration of the loop
-    }
-
-    // Draw the meteor image at its current position
-    ctx.drawImage(m.img, m.x, m.y, m.width, m.height);
-
-    for (let bi = bullets.length - 1; bi >= 0; bi--) {
-      const b = bullets[bi];
-      if (
-        b.x < m.x + m.width &&
-        b.x + b.width > m.x &&
-        b.y < m.y + m.height &&
-        b.y + b.height > m.y
-      ) {
-        m.hp--;
-        bullets.splice(bi, 1);
-        ctx.drawImage(explosionImg, m.x, m.y, m.width, m.height);
-        playExplosion();
-
-        if (m.hp <= 0) {
-          let meteorPoints = 0;
-
-          // Assign points based on the meteor's size or type
-          if (m.hp > 4) {
-            meteorPoints = 30;  // Larger meteors or tougher ones give more points
-          } else if (m.hp > 2) {
-            meteorPoints = 15;  // Medium meteors give a mid-range score
-          } else {
-            meteorPoints = 5;  // Smaller or weaker meteors give the base score
-          }
-
-          if (m.img.src.includes("meteorGrey_big1.png")) {
-            spawnFragments(m.x, m.y, fragmentImg);
-          } else if (m.img.src.includes("meteorBrown_big2.png")) {
-            spawnFragments(m.x, m.y, brownFragmentImg);
-          }
-          meteors.splice(mi, 1);
-          score += meteorPoints;  // Add the points based on the meteor's HP
-          updateScore();
-        }
-
-        if (score > highScore) {
-          highScore = score;
-          localStorage.setItem('highScore', highScore);
-        }
-
-        break; // exit bullet loop after hit
-      }
-    }
-
-    if (m.y > canvas.height) {
-      meteors.splice(mi, 1);
-    }
-  }
-}
+  
   // Load sounds
-  
-  
   function createSound(src) {
     const audio = new Audio(src);
     return () => {
@@ -119,9 +53,15 @@ let gameStarted = false;
 let gameOver = false;
 let playerHP = 20;
 let meteorHP = 2;
+let ammo = 500;
+const maxAmmo = 500;
 let keys = {};
 let shakeTimer = 0;
 let score = 0;
+let timeLeft = 100; // in seconds
+let timerInterval = null;
+let timePowerupsSpawned = 0;
+let maxTimePowerupsPerLevel = 2; // Change as needed
 let flashRed = false;
 let flashTimer = 0;
     let level = 1;
@@ -138,20 +78,20 @@ const fragmentImg = new Image();
 fragmentImg.src = "./Sprites/meteorGrey_tiny1.png";
 const brownFragmentImg = new Image();
 brownFragmentImg.src = "./Sprites/meteorBrown_tiny1.png";
-    upgradedBulletImg.src = "laserGreen12.png";
+    upgradedBulletImg.src = "./Sprites/laserGreen12.png";
     const explosionImg = new Image();
-    explosionImg.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAoCAYAAAD32nqhAAABCElEQVR42qXMPUsCcQDH8d97aGpqampqamprampqamrqARXMyJCMBM+woqGpqamprcWIkgIRkoQbsgiEogf0ztPzzv5d0VC9h+/wWT9aKrm/hBZLzg/xH7QMoeVz1ycUu3DahGKXzguheLnVJJS48u4JJa47NqFkxasRSla7FUIr1W6ZUOqmc0ZoteadElq77Z0QStf9Y0Jp2z8itG73Dwll7vwDQhuN/h6hbCMoEMo+BFuEso9hhtBmM0gRyjUHcUK5p3CBUO7ZzBPKv37MEcq/DWYJWe9mhpDVMtOECu1oilDRjSYJ7XifE4QKvhkntN39HiNUDL5GCe32ohFC+8YME7LCcIj4AxTR+ruOetLeAAAALXRFWHRTb2Z0d2FyZQBieS5ibG9vZGR5LmNyeXB0by5pbWFnZS5QTkcyNEVuY29kZXKoBn/uAAAAAElFTkSuQmCC";
+    explosionImg.src = "./Sprites/Blank.png";
 
 const rogueMeteorImage = new Image();
-rogueMeteorImage.src = "METEORITE-ELEMENTONLY-s.gif";
+rogueMeteorImage.src = "./Sprites/METEORITE-ELEMENTONLY-s.gif";
 
 const meteorImagesByLevel = {
   1: ["./Sprites/meteorBrown_small2.png", "./Sprites/meteorBrown_big2.png"],
   2: ["./Sprites/meteorGrey_med2.png", "./sprites/meteorGrey_small2.png", "./Sprites/meteorGrey_big1.png"],
   3: ["./Sprites/meteorBrown_med3.png", "./Sprites/meteorBrown_big2.png"],
   4: ["./Sprites/enemyGreen2.png", "./Sprites/enemyBlack3.png"],
-  5: ["METEORITE-ELEMENTONLY-s.gif", "./Sprites/enemyBlack4.png"],
-  6: ["METEORITE-ELEMENTONLY-s.gif"] 
+  5: ["./Sprites/METEORITE-ELEMENTONLY-s.gif", "./Sprites/enemyBlack4.png"],
+  6: ["./Sprites/METEORITE-ELEMENTONLY-s.gif"] 
 };
 const meteorHPByImage = {
   "./Sprites/meteorBrown_small2.png": 2,
@@ -165,14 +105,14 @@ const meteorHPByImage = {
   "./Sprites/enemyGreen2.png": 4,
   "./Sprites/enemyBlack3.png": 4,
   "./Sprites/enemyBlack4.png": 4,
-  "METEORITE-ELEMENTONLY-s.gif": 5
+  "./Sprites/METEORITE-ELEMENTONLY-s.gif": 6
 };
 
     const player = {
       x: canvas.width / 2 - 25,
       y: canvas.height - 100,
-      width: 60,
-      height: 60,
+      width: 80,
+      height: 80,
       speed: 10
     };
 
@@ -244,34 +184,18 @@ enemyBulletImg.src = "./sprites/laserGreen12.png";
 document.addEventListener('keydown', e => {
   keys[e.code] = true;
 
-  if (e.code === "Space") {
+  if (e.code === "Space" && ammo > 0) {
     if (upgraded) {
-      // Fire two bullets
-      bullets.push({
-        x: player.x + player.width / 2 - 15,
-        y: player.y,
-        width: 10,
-        height: 20,
-        speed: 8
-      });
-      bullets.push({
-        x: player.x + player.width / 2 + 5,
-        y: player.y,
-        width: 10,
-        height: 20,
-        speed: 8
-      });
+      bullets.push({ x: player.x + player.width / 2 - 15, y: player.y, width: 10, height: 20, speed: 8 });
+      bullets.push({ x: player.x + player.width / 2 + 5, y: player.y, width: 10, height: 20, speed: 8 });
+      ammo -= 2;
     } else {
-      // Fire one bullet
-      bullets.push({
-        x: player.x + player.width / 2 - 5,
-        y: player.y,
-        width: 10,
-        height: 20,
-        speed: 8
-      });
+      bullets.push({ x: player.x + player.width / 2 - 5, y: player.y, width: 10, height: 20, speed: 8 });
+      ammo--;
     }
+
     playLaser();
+    updateAmmoDisplay();
   }
 });
 function updateBackground() {
@@ -291,6 +215,8 @@ if (level >= 6) bg = "./levels/background3.gif";
 function updateScore() {
   if (score >= level * 100 && level < maxLevel) {
     level++;
+    timePowerupsSpawned = 0;
+    timePowerup.spawnTime = Date.now() + 10000 + Math.random() * 5000;
     updateBackground();
 
     // Spawn boss on level 6
@@ -313,7 +239,7 @@ function updateScore() {
   if (score >= 2000 && !boss) {
     gameOver = true;
     document.getElementById("startScreen").style.display = "flex";
-    document.getElementById("startScreen").innerHTML = `<h1>You Win!!</h1><p>Score: ${score}</p><p>High Score: ${highScore}</p><p>Level: ${level}</p><button onclick="location.reload()">Restart</button>`;
+    document.getElementById("startScreen").innerHTML = `<h1>You WON! Good Jeb SheeTy!</h1><p>Score: ${score}</p><p>High Score: ${highScore}</p><p>Level: ${level}</p><button onclick="location.reload()">Restart</button>`;
   }
 
   document.getElementById("scoreDisplay").innerText = `Score: ${score} | High Score: ${highScore} | Level: ${level}`;
@@ -331,7 +257,12 @@ function updateScore() {
         if (b.y < 0) bullets.splice(i, 1);
       });
     }
-
+function checkUpgradeTimeout() {
+  if (upgraded && Date.now() > upgradeEndTime) {
+    upgraded = false;
+    setBulletImg(false); // switch to default bullet
+  }
+}
     
 function spawnFragments(x, y, fragmentImage) {
   for (let i = 0; i < 3; i++) {
@@ -356,22 +287,23 @@ function drawMeteors() {
   for (let mi = meteors.length - 1; mi >= 0; mi--) {
     const m = meteors[mi];
 
-    // Update meteor position based on velocity or speed
-    m.x += m.vx || 0; // Update horizontal position (if rogue meteor)
-    m.y += m.vy || m.speed || 0; // Update vertical position (if rogue meteor or regular)
+    // Update position
+    m.x += m.vx || 0;
+    m.y += m.vy || m.speed || 0;
 
-    // Remove meteor if it's off-screen
+    // Remove if off-screen
     if (
       m.x + m.width < 0 || m.x > canvas.width || 
       m.y + m.height < 0 || m.y > canvas.height
     ) {
-      meteors.splice(mi, 1); // Remove the meteor from the array
-      continue; // Skip this iteration of the loop
+      meteors.splice(mi, 1);
+      continue;
     }
 
-    // Draw the meteor image at its current position
+    // Draw meteor
     ctx.drawImage(m.img, m.x, m.y, m.width, m.height);
 
+    // Bullet collision
     for (let bi = bullets.length - 1; bi >= 0; bi--) {
       const b = bullets[bi];
       if (
@@ -388,22 +320,28 @@ function drawMeteors() {
         if (m.hp <= 0) {
           let meteorPoints = 0;
 
-          // Assign points based on the meteor's size or type
-          if (m.hp > 4) {
-            meteorPoints = 30;  // Larger meteors or tougher ones give more points
+          // 🎯 Score logic for rogues
+          if (m.isRogue) {
+            meteorPoints = 50;
+          } else if (m.hp > 3) {
+            meteorPoints = 30;
           } else if (m.hp > 2) {
-            meteorPoints = 15;  // Medium meteors give a mid-range score
+            meteorPoints = 15;
           } else {
-            meteorPoints = 5;  // Smaller or weaker meteors give the base score
+            meteorPoints = 5;
           }
 
-          if (m.img.src.includes("meteorGrey_big1.png")) {
-            spawnFragments(m.x, m.y, fragmentImg);
-          } else if (m.img.src.includes("meteorBrown_big2.png")) {
-            spawnFragments(m.x, m.y, brownFragmentImg);
+          // 🔄 Fragment logic only for regular meteors
+          if (!m.isRogue) {
+            if (m.img.src.includes("meteorGrey_big1.png")) {
+              spawnFragments(m.x, m.y, fragmentImg);
+            } else if (m.img.src.includes("meteorBrown_big2.png")) {
+              spawnFragments(m.x, m.y, brownFragmentImg);
+            }
           }
+
           meteors.splice(mi, 1);
-          score += meteorPoints;  // Add the points based on the meteor's HP
+          score += meteorPoints;
           updateScore();
         }
 
@@ -412,10 +350,11 @@ function drawMeteors() {
           localStorage.setItem('highScore', highScore);
         }
 
-        break; // exit bullet loop after hit
+        break;
       }
     }
 
+    // Cleanup fallback
     if (m.y > canvas.height) {
       meteors.splice(mi, 1);
     }
@@ -432,6 +371,31 @@ function drawBoss() {
 if (boss) {
   updateBossImage(boss.hp);
   ctx.drawImage(BossImg, boss.x, boss.y, boss.width, boss.height);
+  // === Boss Health Bar ===
+const barWidth = boss.width;
+const barHeight = 10;
+const barX = boss.x;
+const barY = boss.y - 15; // position above boss
+const healthPercent = boss.hp / 300;
+
+// Background
+ctx.fillStyle = "#222";
+ctx.fillRect(barX, barY, barWidth, barHeight);
+
+// Fill
+let barColor = "#00ff00";
+if (boss.hp <= 100) {
+  barColor = "#ff0000"; // red if critical
+} else if (boss.hp <= 200) {
+  barColor = "#ffa500"; // orange for mid HP
+}
+
+ctx.fillStyle = barColor;
+ctx.fillRect(barX, barY, barWidth * healthPercent, barHeight);
+
+// Border
+ctx.strokeStyle = "#fff";
+ctx.strokeRect(barX, barY, barWidth, barHeight);
 }
 
   // Fire bullets at the player every 1s
@@ -482,30 +446,20 @@ if (boss) {
   }
 }
     function gameLoop() {
-    if (!canvas || !ctx || !player) {
-        console.error("Missing game setup: canvas, ctx, or player not initialized.");
-        return;
+      
+      
+ctx.clearRect(0, 0, canvas.width, canvas.height);
+if (gameOver) return;
+handleMovement();
+checkCollisions();
+
+      drawPlayer();
+      drawBullets();
+      drawMeteors();
+      drawBoss();
+      drawEnemyBullets();
+requestAnimationFrame(gameLoop);
     }
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    if (gameOver) return;
-
-    handleMovement();
-    checkCollisions();
-
-    drawPlayer();
-    drawBullets();
-    drawMeteors();
-    drawBoss();
-    drawEnemyBullets();
-    drawHealthBar();
-
-    drawPowerup();             // <- already being added via wrapper
-    checkUpgradeTimeout();     // <- same
-
-    requestAnimationFrame(gameLoop);
-    }
-    
 function drawHealthBar() {
   const barWidth = 200;
   const barHeight = 25;
@@ -581,29 +535,81 @@ setInterval(() => {
 }, 100);
  // check more often, but shoot every 5s per meteor
 
-window.onload = function () {
-    const startButton = document.getElementById("startButton");
-    if (startButton) {
-        startButton.addEventListener("click", () => {
-            document.getElementById("startScreen").style.display = "none";
-            gameStarted = true;
-            updateBackground();
-            drawMeteors();
-            updateScore();
-            startGame();
-        });
-    }
+
+  document.getElementById("startButton").onclick = () => {
+  // Insert the legend into the start screen
+  document.getElementById("startScreen").innerHTML += `
+    <div id="legend">
+      <h3>Legend</h3>
+      <div class="legend-item"><span class="icon">🛡️</span> = Player Life</div>
+      <div class="legend-item"><span class="icon">⏱️</span> = Time Left</div>
+      <div class="legend-item"><span class="icon">🔫</span> = Ammo</div>
+      <div class="legend-item">
+        <img src="./sprites/powerupBlue_bolt.png" class="powerup-icon" /> = Bullet Upgrade +200 Ammo
+      </div>
+      <div class="legend-item">
+        <img src="./sprites/powerupGreen_time.png" class="powerup-icon" /> = +25 Time & +4 Health
+      </div>
+      <div class="legend-item">
+        <img src="./sprites/powerupRed_ammo.png" class="powerup-icon" /> = +100 Ammo
+      </div>
+    </div>
+  `;
+
+  // Now hide the start screen and begin the game
+  document.getElementById("startScreen").style.display = "none";
+  gameStarted = true;
+  updateBackground();
+  updateScore();
+  startTimer();
+  updateAmmoDisplay();
+  gameLoop();
 };
+
   
 document.addEventListener('keyup', e => {
   keys[e.code] = false;
 });
 
+function startTimer() {
+  document.getElementById("timerText").innerText = `Time: ${timeLeft}`;
+  timerInterval = setInterval(() => {
+    if (!gameStarted || gameOver) {
+      clearInterval(timerInterval);
+      return;
+    }
+
+    timeLeft--;
+    document.getElementById("timerText").innerText = `Time: ${timeLeft}`;
+    const timerDisplay = document.getElementById("timerText");
+if (timeLeft <= 15) {
+  timerDisplay.classList.add("pulsing");
+} else {
+  timerDisplay.classList.remove("pulsing");
+}
+
+    if (timeLeft <= 0) {
+      clearInterval(timerInterval);
+      gameOver = true;
+      timerDisplay.classList.remove("pulsing");
+      document.getElementById("startScreen").style.display = "flex";
+      document.getElementById("startScreen").innerHTML = `<h1>Time's Up Piece of SHeeT! Game Over!</h1><p>Score: ${score}</p><p>High Score: ${highScore}</p><p>Level: ${level}</p><button onclick="location.reload()">Restart</button>`;
+    }
+  }, 1000);
+}
 function handleMovement() {
   if (keys["ArrowLeft"] || keys["KeyA"]) player.x -= player.speed;
   if (keys["ArrowRight"] || keys["KeyD"]) player.x += player.speed;
   if (keys["ArrowUp"] || keys["KeyW"]) player.y -= player.speed;
   if (keys["ArrowDown"] || keys["KeyS"]) player.y += player.speed;
+  if (player.x < 0) player.x = 0;
+  if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
+  if (player.y < 0) player.y = 0;
+  if (player.y + player.height > canvas.height) player.y = canvas.height - player.height;
+}
+
+function updateAmmoDisplay() {
+  document.getElementById('ammoDisplay').innerText = `🔫 Ammo: ${ammo}`;
 }
 
 function updatePlayerImage() {
@@ -624,14 +630,32 @@ function updatePlayerImage() {
     playerImg = playerImagesByHP[20]; // Full HP image
   }
 }
+const maxHP = 20;
+const maxBarWidth = 300;
+
 function updateHealthBar() {
   const bar = document.getElementById('healthBar');
-  if (bar) {
-    const width = (playerHP / 20) * 100;
-    bar.style.width = width + '%';
-    bar.classList.add('flash-hit');
-    setTimeout(() => bar.classList.remove('flash-hit'), 300);
+  const container = document.getElementById('healthBarContainer');
+  const percent = Math.max(0, playerHP / maxHP);
+
+  // Update fill bar
+  const fillWidth = percent * (maxBarWidth - 10); // subtract padding/margin if needed
+  bar.style.width = fillWidth + "px";
+
+  // Update border container width
+  const containerWidth = Math.max(percent * maxBarWidth, 50);
+  container.style.width = containerWidth + "px";
+
+  // Color logic
+  let barColor = "#00ff00";
+  if (percent <= 0.35) {
+    const strobe = Math.floor(Date.now() / 100) % 2 === 0;
+    barColor = strobe ? "#ff0000" : "#880000";
+  } else if (percent <= 0.7) {
+    barColor = "#ffa500";
   }
+
+  bar.style.backgroundColor = barColor;
 }
 
 function updateBossImage(bossHP) {
@@ -657,8 +681,9 @@ function checkCollisions() {
       playShieldDown();
       if (playerHP <= 0) {
         gameOver = true;
+        timerDisplay.classList.remove("pulsing");
         document.getElementById("startScreen").style.display = "flex";
-        document.getElementById("startScreen").innerHTML = `<h1>Game Over! You Are SheeTy!!</h1><p>Score: ${score}</p><p>High Score: ${highScore}</p><p>Level: ${level}</p><button onclick="location.reload()">Restart</button>`;
+        document.getElementById("startScreen").innerHTML = `<h1>Game Over! You Died SheeTy!!</h1><p>Score: ${score}</p><p>High Score: ${highScore}</p><p>Level: ${level}</p><button onclick="location.reload()">Restart</button>`;
       }
     }
   });
@@ -671,13 +696,75 @@ function drawPlayer() {
     offsetY = Math.random() * 10 - 5;
     shakeTimer--;
   }
-  ctx.drawImage(playerImg, player.x + offsetX, player.y + offsetY, player.width, player.height);
-}
-function checkUpgradeTimeout() {
-  if (upgraded && Date.now() > upgradeEndTime) {
-    upgraded = false;
-    setBulletImg(false); // switch to default bullet
+  const drawX = player.x + offsetX;
+  const drawY = player.y + offsetY;
+
+  // Draw the player ship
+  ctx.drawImage(playerImg, drawX, drawY, player.width, player.height);
+
+    // === Layout constants ===
+  const iconSize = 16;
+  const spacing = 4;
+  const hpBarWidth = player.width;
+  const hpBarHeight = 10;
+  const timeBarHeight = 6;
+
+  // === HP Bar with strobe effect ===
+  const hpBarX = drawX + iconSize + spacing;
+  const hpBarY = drawY + player.height + spacing;
+  const healthPercent = playerHP / 20;
+
+  let barColor = "#00ff00"; // Default: green
+  if (healthPercent <= 0.35) {
+    const strobe = Math.floor(Date.now() / 100) % 2 === 0;
+    barColor = strobe ? "#ff0000" : "#880000";
+  } else if (healthPercent <= 0.7) {
+    barColor = "#ffa500"; // Orange
   }
+
+  // Background
+  ctx.fillStyle = "#222";
+  ctx.fillRect(hpBarX, hpBarY, hpBarWidth, hpBarHeight);
+
+  // Fill
+  ctx.fillStyle = barColor;
+  ctx.fillRect(hpBarX, hpBarY, hpBarWidth * healthPercent, hpBarHeight);
+
+  // Border
+  ctx.strokeStyle = "#fff";
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(hpBarX, hpBarY, hpBarWidth, hpBarHeight);
+
+  // 🛡️ Icon
+  ctx.font = `${iconSize}px Orbitron`;
+  ctx.fillStyle = "#ffffff";
+  ctx.fillText("🛡️", drawX, hpBarY + hpBarHeight);
+
+  // === Time Bar with same styling ===
+  const timeBarX = drawX + iconSize + spacing;
+  const timeBarY = hpBarY + hpBarHeight + spacing;
+  const timePercent = Math.min(timeLeft / 100, 1);
+
+  let timeColor = "#ffcc00";
+  if (timeLeft <= 15) {
+    const pulse = Math.floor(Date.now() / 250) % 2 === 0;
+    timeColor = pulse ? "#ff0000" : "#aa0000";
+  }
+
+  ctx.fillStyle = "#222";
+  ctx.fillRect(timeBarX, timeBarY, hpBarWidth, timeBarHeight);
+
+  ctx.fillStyle = timeColor;
+  ctx.fillRect(timeBarX, timeBarY, hpBarWidth * timePercent, timeBarHeight);
+
+  ctx.strokeStyle = "#fff";
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(timeBarX, timeBarY, hpBarWidth, timeBarHeight);
+
+  // ⏱️ Icon
+  ctx.font = `${iconSize}px Orbitron`;
+  ctx.fillStyle = "#ffffff";
+  ctx.fillText("⏱️", drawX, timeBarY + timeBarHeight);
 }
 
 function startGame() {
@@ -685,8 +772,10 @@ function startGame() {
         score = 0;
         level = 0;
         gameOver = false;
-        drawMeteors();
         drawPowerup();
+        drawTimePowerup();
+        updateHealthBar();
+        updateAmmoDisplay();
         checkUpgradeTimeout();
         requestAnimationFrame(gameLoop);
     } else {
@@ -696,12 +785,24 @@ function startGame() {
 let originalGameLoop = gameLoop;
 gameLoop = function () {
     originalGameLoop();
-    drawMeteors();
     drawPowerup();
+    drawTimePowerup();
+    updateHealthBar();
+    updateAmmoDisplay();
     checkUpgradeTimeout();
 };
 
 // === Powerup and Bullet Upgrade Logic ===
+let timePowerup = {
+  x: Math.random() * canvas.width,
+  y: -50,
+  width: 32,
+  height: 32,
+  image: new Image(),
+  active: false,
+  spawnTime: Date.now() + 20000 + Math.random() * 15000 
+};
+timePowerup.image.src = "./sprites/powerupGreen_star.png";
 
 let powerup = {
     x: Math.random() * canvas.width,
@@ -724,41 +825,113 @@ function setBulletImg(upgraded) {
 
 // Spawn and draw powerup
 function drawPowerup() {
-    if (Date.now() > powerup.spawnTime && !powerup.active) {
-        powerup.x = Math.random() * (canvas.width - powerup.width);
-        powerup.y = -50;
-        powerup.active = true;
+  const now = Date.now();
+
+  // Spawn if time passed and not active
+  if (now > powerup.spawnTime && !powerup.active) {
+    powerup.x = Math.random() * (canvas.width - powerup.width);
+    powerup.y = -50;
+    powerup.active = true;
+  }
+
+  if (powerup.active) {
+    powerup.y += 2;
+    ctx.drawImage(powerup.image, powerup.x, powerup.y, powerup.width, powerup.height);
+
+    // Collision with player
+    if (
+      player.x < powerup.x + powerup.width &&
+      player.x + player.width > powerup.x &&
+      player.y < powerup.y + powerup.height &&
+      player.y + player.height > powerup.y
+    ) {
+      powerup.active = false;
+
+      // Apply powerup effect
+      upgraded = true;
+      upgradeEndTime = Date.now() + 10000;
+      ammo = Math.min(ammo + 200, maxAmmo);
+      updateAmmoDisplay();
+      setBulletImage(true);
+      playShieldUp();
+
+      // 🔁 Set next spawn time (15–25 seconds later)
+      powerup.spawnTime = now + 15000 + Math.random() * 10000;
     }
-    if (powerup.active) {
-        powerup.y += 2;
-        ctx.drawImage(powerup.image, powerup.x, powerup.y, powerup.width, powerup.height);
-        // Collision with player
-        if (
-            player.x < powerup.x + powerup.width &&
-            player.x + player.width > powerup.x &&
-            player.y < powerup.y + powerup.height &&
-            player.y + player.height > powerup.y
-        ) {
-            powerup.active = false;
-            upgraded = true;
-            upgradeEndTime = Date.now() + 10000;  // 10 seconds
-            setBulletImage(true);
-            playShieldUp();
-        }
-        // Despawn if off screen
-        if (powerup.y > canvas.height) {
-            powerup.active = false;
-        }
+
+    // Despawn if off screen
+    if (powerup.y > canvas.height) {
+      powerup.active = false;
+
+      // 🔁 Set next spawn time (if missed)
+      powerup.spawnTime = now + 15000 + Math.random() * 10000;
     }
+  }
 }
 
+function drawTimePowerup() {
+  const now = Date.now();
+
+  // Only spawn if:
+  // - Time to spawn has passed
+  // - Powerup isn't active
+  // - Fewer than the max allowed have spawned this level
+  if (
+    now > timePowerup.spawnTime &&
+    !timePowerup.active &&
+    timePowerupsSpawned < maxTimePowerupsPerLevel
+  ) {
+    timePowerup.x = Math.random() * (canvas.width - timePowerup.width);
+    timePowerup.y = -50;
+    timePowerup.active = true;
+    timePowerupsSpawned++;
+  }
+
+  if (timePowerup.active) {
+    timePowerup.y += 2;
+    ctx.drawImage(timePowerup.image, timePowerup.x, timePowerup.y, timePowerup.width, timePowerup.height);
+
+    // Collision with player
+    if (
+      player.x < timePowerup.x + timePowerup.width &&
+      player.x + player.width > timePowerup.x &&
+      player.y < timePowerup.y + timePowerup.height &&
+      player.y + player.height > timePowerup.y
+    ) {
+      timePowerup.active = false;
+      timeLeft += 25;
+      if (timeLeft > 999) timeLeft = 999;
+
+      playerHP = Math.min(playerHP + 4, 20);
+       updateHealthBar();      // Updates HUD
+       updatePlayerImage(); 
+
+      const timerDisplay = document.getElementById("timerText");
+      timerDisplay.innerText = `Time: ${timeLeft}`;
+      timerDisplay.classList.add("flash");
+      setTimeout(() => timerDisplay.classList.remove("flash"), 3000);
+
+      playShieldUp();
+
+      // Set a new delayed spawn time (no back-to-back spawn)
+      timePowerup.spawnTime = now + 15000 + Math.random() * 10000; // 15–25 sec delay
+    }
+
+    // Despawn if off screen
+    if (timePowerup.y > canvas.height) {
+      timePowerup.active = false;
+      // Set delayed spawn time even if missed
+      timePowerup.spawnTime = now + 15000 + Math.random() * 10000;
+    }
+  }
+}
 
 
 function drawEnemyBullets() {
   for (let i = enemyBullets.length - 1; i >= 0; i--) {
     const b = enemyBullets[i];
     b.x += b.vx;
-b.y += b.vy;
+    b.y += b.vy;
     ctx.drawImage(enemyBulletImg, b.x, b.y, b.width, b.height);
 
     // Check collision with player
@@ -776,8 +949,9 @@ b.y += b.vy;
 
       if (playerHP <= 0) {
         gameOver = true;
+        timerDisplay.classList.remove("pulsing");
         document.getElementById("startScreen").style.display = "flex";
-        document.getElementById("startScreen").innerHTML = `<h1>Game Over! You Are SheeTy!!</h1><p>Score: ${score}</p><p>High Score: ${highScore}</p><p>Level: ${level}</p><button onclick="location.reload()">Restart</button>`;
+        document.getElementById("startScreen").innerHTML = `<h1>Game Over! You Died SheeTy!!</h1><p>Score: ${score}</p><p>High Score: ${highScore}</p><p>Level: ${level}</p><button onclick="location.reload()">Restart</button>`;
       }
     }
 
@@ -787,16 +961,5 @@ b.y += b.vy;
   }
 }
 
-window.addEventListener('DOMContentLoaded', () => {
-  const startButton = document.getElementById("startButton");
-  if (startButton) {
-    startButton.addEventListener("click", () => {
-      document.getElementById("startScreen").style.display = "none";
-      startGame();
-    });
-  } else {
-    console.warn("Start button not found.");
-  }
-});
 
-window.startGame = drawMeteors;
+})();

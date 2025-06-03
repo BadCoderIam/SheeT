@@ -185,12 +185,67 @@
   font-size: 24px;
   text-shadow: 0 0 5px #ff6f00;
 }
+
+#legend {
+  position: absolute;
+  top: 220px;
+  left: 20px;
+  background: #111c;
+  border: 2px solid #fff;
+  padding: 12px 16px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px #ff6f00;
+  font-family: 'Orbitron', sans-serif;
+  color: #fff;
+  z-index: 10;
+  width: fit-content;
+  max-width: 320px;
+}
+
+#legend h3 {
+  margin: 0 0 10px 0;
+  font-size: 20px;
+  color: #ffaa00;
+  text-shadow: 0 0 4px #ffaa00;
+}
+
+.legend-item {
+  margin: 4px 0;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+}
+
+.legend-item .icon {
+  margin-right: 8px;
+  font-size: 18px;
+}
+
+.powerup-icon {
+  width: 28px;
+  height: 28px;
+  margin-right: 8px;
+  vertical-align: middle;
+}
 </style>
 </head>
 <body>
 <div id="startScreen">
-<h1>SheeTy Abyss</h1>
-<button id="startButton">Start SheeT</button>
+  <h1>SheeTy Abyss</h1>
+  <button id="startButton">Start SheeT</button>
+
+  <div id="legend">
+    <h3>Legend</h3>
+    <div class="legend-item"><span class="icon">🛡️</span> = Player Life</div>
+    <div class="legend-item"><span class="icon">⏱️</span> = Time Left</div>
+    <div class="legend-item"><span class="icon">🔫</span> = Ammo</div>
+    <div class="legend-item">
+      <img src="./sprites/powerupBlue_bolt.png" class="powerup-icon" /> = Bullet Upgrade +200 Ammo
+    </div>
+    <div class="legend-item">
+      <img src="./sprites/powerupGreen_star.png" class="powerup-icon" /> = +25 Seconds Time & +4 Health
+    </div>
+  </div>
 </div>
 <div id="scoreDisplay">Score: 0 | High Score: 0 | Level: 0 
 </div>
@@ -910,15 +965,36 @@ setInterval(() => {
  // check more often, but shoot every 5s per meteor
 
 
-    document.getElementById("startButton").onclick = () => {
-      document.getElementById("startScreen").style.display = "none";
-      gameStarted = true;
-      updateBackground();
-      updateScore();
-      startTimer();
-      updateAmmoDisplay();
-      gameLoop();
-    };
+  document.getElementById("startButton").onclick = () => {
+  // Insert the legend into the start screen
+  document.getElementById("startScreen").innerHTML += `
+    <div id="legend">
+      <h3>Legend</h3>
+      <div class="legend-item"><span class="icon">🛡️</span> = Player Life</div>
+      <div class="legend-item"><span class="icon">⏱️</span> = Time Left</div>
+      <div class="legend-item"><span class="icon">🔫</span> = Ammo</div>
+      <div class="legend-item">
+        <img src="./sprites/powerupBlue_bolt.png" class="powerup-icon" /> = Bullet Upgrade +200 Ammo
+      </div>
+      <div class="legend-item">
+        <img src="./sprites/powerupGreen_time.png" class="powerup-icon" /> = +25 Time & +4 Health
+      </div>
+      <div class="legend-item">
+        <img src="./sprites/powerupRed_ammo.png" class="powerup-icon" /> = +100 Ammo
+      </div>
+    </div>
+  `;
+
+  // Now hide the start screen and begin the game
+  document.getElementById("startScreen").style.display = "none";
+  gameStarted = true;
+  updateBackground();
+  updateScore();
+  startTimer();
+  updateAmmoDisplay();
+  gameLoop();
+};
+
   
 document.addEventListener('keyup', e => {
   keys[e.code] = false;
@@ -996,7 +1072,7 @@ function updateHealthBar() {
   bar.style.width = fillWidth + "px";
 
   // Update border container width
-  const containerWidth = percent * maxBarWidth;
+  const containerWidth = Math.max(percent * maxBarWidth, 50);
   container.style.width = containerWidth + "px";
 
   // Color logic
@@ -1178,7 +1254,10 @@ function setBulletImg(upgraded) {
 
 // Spawn and draw powerup
 function drawPowerup() {
-  if (Date.now() > powerup.spawnTime && !powerup.active) {
+  const now = Date.now();
+
+  // Spawn if time passed and not active
+  if (now > powerup.spawnTime && !powerup.active) {
     powerup.x = Math.random() * (canvas.width - powerup.width);
     powerup.y = -50;
     powerup.active = true;
@@ -1197,18 +1276,24 @@ function drawPowerup() {
     ) {
       powerup.active = false;
 
-      // Enable bullet upgrade
+      // Apply powerup effect
       upgraded = true;
-      upgradeEndTime = Date.now() + 10000; // 10 seconds
-      ammo = Math.min(ammo + 250, maxAmmo);
+      upgradeEndTime = Date.now() + 10000;
+      ammo = Math.min(ammo + 200, maxAmmo);
       updateAmmoDisplay();
       setBulletImage(true);
       playShieldUp();
+
+      // 🔁 Set next spawn time (15–25 seconds later)
+      powerup.spawnTime = now + 15000 + Math.random() * 10000;
     }
 
     // Despawn if off screen
     if (powerup.y > canvas.height) {
       powerup.active = false;
+
+      // 🔁 Set next spawn time (if missed)
+      powerup.spawnTime = now + 15000 + Math.random() * 10000;
     }
   }
 }
