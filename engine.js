@@ -51,7 +51,6 @@ bossImage.src = "./Sprites/enemyBlack5.png";
     
 let gameStarted = false;
 let gameOver = false;
-let playerHP = 20;
 let meteorHP = 2;
 let ammo = 500;
 const maxAmmo = 500;
@@ -113,7 +112,8 @@ const meteorHPByImage = {
       y: canvas.height - 100,
       width: 80,
       height: 80,
-      speed: 10
+      speed: 10,
+      hp: 20
     };
 
     const bullets = [];
@@ -457,6 +457,7 @@ checkCollisions();
       drawBullets();
       drawMeteors();
       drawBoss();
+      applyGravityPull();
       drawEnemyBullets();
 requestAnimationFrame(gameLoop);
     }
@@ -471,7 +472,7 @@ function drawHealthBar() {
   ctx.fillRect(x, y, barWidth, barHeight);
 
   // Calculate health ratio
-  const healthPercent = playerHP / 20;
+  const healthPercent = player.hp / 20;
 
   // Determine color
   let barColor = "#00ff00"; // Green by default
@@ -496,7 +497,7 @@ function drawHealthBar() {
   // Text
   ctx.fillStyle = "#ffffff";
   ctx.font = "18px Orbitron";
-  ctx.fillText(`HP: ${playerHP}/20`, x + 5, y + 18);
+  ctx.fillText(`HP: ${player.hp}/20`, x + 5, y + 18);
 }
 
     setInterval(() => {
@@ -537,26 +538,6 @@ setInterval(() => {
 
 
   document.getElementById("startButton").onclick = () => {
-  // Insert the legend into the start screen
-  document.getElementById("startScreen").innerHTML += `
-    <div id="legend">
-      <h3>Legend</h3>
-      <div class="legend-item"><span class="icon">🛡️</span> = Player Life</div>
-      <div class="legend-item"><span class="icon">⏱️</span> = Time Left</div>
-      <div class="legend-item"><span class="icon">🔫</span> = Ammo</div>
-      <div class="legend-item">
-        <img src="./sprites/powerupBlue_bolt.png" class="powerup-icon" /> = Bullet Upgrade +200 Ammo
-      </div>
-      <div class="legend-item">
-        <img src="./sprites/powerupGreen_time.png" class="powerup-icon" /> = +25 Time & +4 Health
-      </div>
-      <div class="legend-item">
-        <img src="./sprites/powerupRed_ammo.png" class="powerup-icon" /> = +100 Ammo
-      </div>
-    </div>
-  `;
-
-  // Now hide the start screen and begin the game
   document.getElementById("startScreen").style.display = "none";
   gameStarted = true;
   updateBackground();
@@ -614,19 +595,19 @@ function updateAmmoDisplay() {
 
 function updatePlayerImage() {
   // Check if the player's HP is between the predefined thresholds
-  if (playerHP >= 1 && playerHP <= 4) {
+  if (player.hp >= 1 && player.hp <= 5) {
     playerImg = playerImagesByHP[5];
   }
-  else if (playerHP > 4 && playerHP <= 10) {
+  else if (player.hp > 4 && player.hp <= 10) {
     playerImg = playerImagesByHP[5]; // Critical damage image
   }
-  else if (playerHP > 10 && playerHP <= 15) {
+  else if (player.hp > 10 && player.hp <= 15) {
     playerImg = playerImagesByHP[10]; // Heavy damage image
   }
-  else if (playerHP > 15 && playerHP <= 20) {
+  else if (player.hp > 15 && player.hp <= 20) {
     playerImg = playerImagesByHP[15]; // Slight damage image
   }
-  else if (playerHP > 20) {
+  else if (player.hp > 20) {
     playerImg = playerImagesByHP[20]; // Full HP image
   }
 }
@@ -636,7 +617,7 @@ const maxBarWidth = 300;
 function updateHealthBar() {
   const bar = document.getElementById('healthBar');
   const container = document.getElementById('healthBarContainer');
-  const percent = Math.max(0, playerHP / maxHP);
+  const percent = Math.max(0, player.hp / maxHP);
 
   // Update fill bar
   const fillWidth = percent * (maxBarWidth - 10); // subtract padding/margin if needed
@@ -674,12 +655,12 @@ function checkCollisions() {
       player.y + player.height > m.y
     ) {
       meteors.splice(mi, 1);
-      playerHP--;
+      player.hp--;
       shakeTimer = 120;
       updateHealthBar();
       updatePlayerImage();
       playShieldDown();
-      if (playerHP <= 0) {
+      if (player.hp <= 0) {
         gameOver = true;
         timerDisplay.classList.remove("pulsing");
         document.getElementById("startScreen").style.display = "flex";
@@ -712,7 +693,7 @@ function drawPlayer() {
   // === HP Bar with strobe effect ===
   const hpBarX = drawX + iconSize + spacing;
   const hpBarY = drawY + player.height + spacing;
-  const healthPercent = playerHP / 20;
+  const healthPercent = player.hp / 20;
 
   let barColor = "#00ff00"; // Default: green
   if (healthPercent <= 0.35) {
@@ -776,6 +757,7 @@ function startGame() {
         drawTimePowerup();
         updateHealthBar();
         updateAmmoDisplay();
+        applyGravityPull();
         checkUpgradeTimeout();
         requestAnimationFrame(gameLoop);
     } else {
@@ -788,6 +770,7 @@ gameLoop = function () {
     drawPowerup();
     drawTimePowerup();
     updateHealthBar();
+    applyGravityPull();
     updateAmmoDisplay();
     checkUpgradeTimeout();
 };
@@ -817,6 +800,125 @@ powerup.image.src = "./sprites/powerupBlue_bolt.png";
 
 let upgraded = false;
 let upgradeEndTime = 0;
+
+function applyGravityPull() {
+  const centerX = canvas.width / 2;
+  const centerY = canvas.height / 2;
+
+  if (level === 3 || level === 6) {
+    const dx = centerX - (player.x + player.width / 2);
+    const dy = centerY - (player.y + player.height / 2);
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    // Gentle gravity
+    const gravityStrength = (level === 6) ? 0.00045 : 0.00025;
+    const dirX = dx / distance;
+    const dirY = dy / distance;
+
+    // Initialize velocity if not present
+    if (player.xVelocity === undefined) player.xVelocity = 0;
+    if (player.yVelocity === undefined) player.yVelocity = 0;
+
+    // Apply force
+    const pull = Math.min(gravityStrength * distance, 0.5);
+    player.xVelocity += dirX * pull;
+    player.yVelocity += dirY * pull;
+
+    // Damping and max speed
+    player.xVelocity *= 0.85;
+    player.yVelocity *= 0.85;
+    const maxSpeed = 2;
+    player.xVelocity = Math.max(-maxSpeed, Math.min(maxSpeed, player.xVelocity));
+    player.yVelocity = Math.max(-maxSpeed, Math.min(maxSpeed, player.yVelocity));
+
+    // Apply movement
+    player.x += player.xVelocity;
+    player.y += player.yVelocity;
+
+    // === Burn zone logic ===
+    const deathRadius = (level === 6) ? 140 : 100;
+    const now = Date.now();
+
+    if (distance < deathRadius) {
+      // 💥 Shake effect
+      shakeTimer = 10;
+
+      // 🔥 Burn damage timer
+      if (player.lastGravityDamage === undefined) {
+        player.lastGravityDamage = now;
+      }
+
+      if (now - player.lastGravityDamage >= 1000) {
+        player.hp = Math.max(0, player.hp - 1);
+        updateHealthBar();
+        updatePlayerImage();
+        playShieldDown();
+        player.lastGravityDamage = now;
+
+        // Optional: Display burn message
+        console.log("🔥 Burning in gravity core!");
+      }
+    } else {
+      // Reset burn timer when out of range
+      player.lastGravityDamage = undefined;
+    }
+  }
+
+  // Level 4 rightward gravity
+  if (level === 4) {
+  const gravityForce = 0.02;
+
+  if (player.xVelocity === undefined) player.xVelocity = 0;
+
+  // Apply rightward gravity
+  player.xVelocity += gravityForce;
+  player.xVelocity *= 0.95;
+  player.x += player.xVelocity;
+
+  // Clamp player inside canvas
+  if (player.x > canvas.width - player.width) {
+    player.x = canvas.width - player.width;
+    player.xVelocity = 0;
+  }
+
+  // === Right-side Burn Zone ===
+  const burnZoneStartX = canvas.width - 200; // starts 120px from right edge
+  const burnDamageRate = 2000; // 2 seconds
+  const now = Date.now();
+
+  const playerRight = player.x + player.width;
+
+  if (playerRight > burnZoneStartX) {
+    // Shake effect
+    shakeTimer = 10;
+
+    // Burn damage logic
+    if (player.lastGravityDamage === undefined) {
+      player.lastGravityDamage = now;
+    }
+
+    if (now - player.lastGravityDamage >= burnDamageRate) {
+      player.hp = Math.max(0, player.hp - 1);
+      updateHealthBar();
+      updatePlayerImage();
+      playShieldDown();
+      player.lastGravityDamage = now;
+
+      console.log("🔥 Burning in right-side gravity zone!");
+    }
+  } else {
+    // Reset timer if outside burn zone
+    player.lastGravityDamage = undefined;
+  }
+}
+
+  // Reset velocity outside level 3 or 4
+  if (level !== 3 && level !== 4 && level !== 6) {
+    player.xVelocity = 0;
+    player.yVelocity = 0;
+  }
+}
+
 
 // Update player bullet image function
 function setBulletImg(upgraded) {
@@ -888,7 +990,7 @@ function drawTimePowerup() {
   }
 
   if (timePowerup.active) {
-    timePowerup.y += 2;
+    timePowerup.y += 4;
     ctx.drawImage(timePowerup.image, timePowerup.x, timePowerup.y, timePowerup.width, timePowerup.height);
 
     // Collision with player
@@ -902,7 +1004,7 @@ function drawTimePowerup() {
       timeLeft += 25;
       if (timeLeft > 999) timeLeft = 999;
 
-      playerHP = Math.min(playerHP + 4, 20);
+      player.hp = Math.min(player.hp + 4, 20);
        updateHealthBar();      // Updates HUD
        updatePlayerImage(); 
 
@@ -942,12 +1044,12 @@ function drawEnemyBullets() {
       b.y + b.height > player.y
     ) {
       enemyBullets.splice(i, 1);
-      playerHP--;
+      player.hp--;
       shakeTimer = 120;
       updatePlayerImage();
       playShieldDown();
 
-      if (playerHP <= 0) {
+      if (player.hp <= 0) {
         gameOver = true;
         timerDisplay.classList.remove("pulsing");
         document.getElementById("startScreen").style.display = "flex";
