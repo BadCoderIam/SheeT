@@ -1,4 +1,4 @@
-export function updateBackground() {
+export function updateBackground(level) {
     let bg = "./levels/background1.gif";
     if (level >= 2) bg = "./levels/background2.gif";
 if (level >= 3) bg = "./levels/background3.gif";

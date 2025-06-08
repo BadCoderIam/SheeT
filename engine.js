@@ -3,19 +3,12 @@
 import { applyGravityPull } from './gravity.js';
 import { updateBackground } from './levels.js';
 import { playerImg, playerImagesByHP, updatePlayerImage } from './playerimg.js';
+import * as audio from './audio.js';
+
 
 (function () {
 
 
-  
-  // Load sounds
-  function createSound(src) {
-    const audio = new Audio(src);
-    return () => {
-      const sound = audio.cloneNode();
-      sound.play().catch(e => console.warn("Sound error:", e));
-    };
-  }
 
 
 const BossImagesByHP = {
@@ -32,10 +25,6 @@ BossImagesByHP[100].src = "./sprites/enemyRed5.png";        // Heavy damage
 BossImagesByHP[50].src = "./sprites/enemyblack5.png";   // Critical
 
 
-  const playLaser = createSound('./sounds/sfx_laser1.ogg');
-  const playExplosion = createSound('./sounds/sfx_lose.ogg');
-  const playShieldDown = createSound('./sounds/sfx_shieldDown.ogg');
-  const playShieldUp = createSound('./sounds/sfx_shieldUp.ogg');
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
     canvas.width = window.innerWidth;
@@ -201,7 +190,7 @@ document.addEventListener('keydown', e => {
       ammo--;
     }
 
-    playLaser();
+    audio.playLaser();
     updateAmmoDisplay();
   }
 });
@@ -212,7 +201,7 @@ function updateScore() {
     level++;
     timePowerupsSpawned = 0;
     timePowerup.spawnTime = Date.now() + 10000 + Math.random() * 5000;
-    updateBackground();
+    updateBackground(level);
 
     // Spawn boss on level 6
     if (level === 6) {
@@ -310,7 +299,7 @@ function drawMeteors() {
         m.hp--;
         bullets.splice(bi, 1);
         ctx.drawImage(explosionImg, m.x, m.y, m.width, m.height);
-        playExplosion();
+        audio.playExplosion();
 
         if (m.hp <= 0) {
           let meteorPoints = 0;
@@ -410,7 +399,7 @@ ctx.strokeRect(barX, barY, barWidth, barHeight);
       vx, vy
     });
 
-    playLaser();
+    audio.playLaser();
     boss.lastShotTime = Date.now();
   }
 
@@ -428,7 +417,7 @@ ctx.strokeRect(barX, barY, barWidth, barHeight);
       score += 1;
       updateScore();
       ctx.drawImage(explosionImg, b.x, b.y, 30, 30);
-      playExplosion();
+      audio.playExplosion();
 
       if (boss.hp <= 0) {
         boss = null;
@@ -452,7 +441,7 @@ checkCollisions();
       drawBullets();
       drawMeteors();
       drawBoss();
-      applyGravityPull(canvas, player, level, updateHealthBar, updatePlayerImage, playShieldDown, val => shakeTimer = val);
+      applyGravityPull(canvas, player, level, updateHealthBar, updatePlayerImage, audio.playShieldDown, val => shakeTimer = val);
       drawEnemyBullets();
 requestAnimationFrame(gameLoop);
     }
@@ -523,7 +512,7 @@ setInterval(() => {
             vy: vy
           });
           m.lastShotTime = Date.now();
-          playLaser();
+          audio.playLaser();
         }
       }
     });
@@ -535,7 +524,7 @@ setInterval(() => {
   document.getElementById("startButton").onclick = () => {
   document.getElementById("startScreen").style.display = "none";
   gameStarted = true;
-  updateBackground();
+  updateBackground(level);
   updateScore();
   startTimer();
   updateAmmoDisplay();
@@ -635,8 +624,8 @@ function checkCollisions() {
       player.hp--;
       shakeTimer = 120;
       updateHealthBar();
-      updatePlayerImage();
-      playShieldDown();
+      updatePlayerImage(player);
+      audio.playShieldDown();
       if (player.hp <= 0) {
         gameOver = true;
         timerDisplay.classList.remove("pulsing");
@@ -734,7 +723,7 @@ function startGame() {
         drawTimePowerup();
         updateHealthBar();
         updateAmmoDisplay();
-        applyGravityPull(canvas, player, level, updateHealthBar, updatePlayerImage, playShieldDown, val => shakeTimer = val);
+        applyGravityPull(canvas, player, level, updateHealthBar, updatePlayerImage, audio.playShieldDown, val => shakeTimer = val);
         checkUpgradeTimeout();
         requestAnimationFrame(gameLoop);
     } else {
@@ -747,7 +736,7 @@ gameLoop = function () {
     drawPowerup();
     drawTimePowerup();
     updateHealthBar();
-    applyGravityPull(canvas, player, level, updateHealthBar, updatePlayerImage, playShieldDown, val => shakeTimer = val);
+    applyGravityPull(canvas, player, level, updateHealthBar, updatePlayerImage, audio.playShieldDown, val => shakeTimer = val);
     updateAmmoDisplay();
     checkUpgradeTimeout();
 };
@@ -808,7 +797,7 @@ function drawPowerup() {
       ammo = Math.min(ammo + 200, maxAmmo);
       updateAmmoDisplay();
       setBulletImg(true);
-      playShieldUp();
+      audio.playShieldUp();
 
       // 🔁 Set next spawn time (15–25 seconds later)
       powerup.spawnTime = now + 15000 + Math.random() * 10000;
@@ -859,14 +848,14 @@ function drawTimePowerup() {
 
       player.hp = Math.min(player.hp + 4, 20);
        updateHealthBar();      // Updates HUD
-       updatePlayerImage(); 
+       updatePlayerImage(player); 
 
       const timerDisplay = document.getElementById("timerText");
       timerDisplay.innerText = `Time: ${timeLeft}`;
       timerDisplay.classList.add("flash");
       setTimeout(() => timerDisplay.classList.remove("flash"), 3000);
 
-      playShieldUp();
+      audio.playShieldUp();
 
       // Set a new delayed spawn time (no back-to-back spawn)
       timePowerup.spawnTime = now + 15000 + Math.random() * 10000; // 15–25 sec delay
@@ -899,8 +888,8 @@ function drawEnemyBullets() {
       enemyBullets.splice(i, 1);
       player.hp--;
       shakeTimer = 120;
-      updatePlayerImage();
-      playShieldDown();
+      updatePlayerImage(player);
+      audio.playShieldDown();
 
       if (player.hp <= 0) {
         gameOver = true;

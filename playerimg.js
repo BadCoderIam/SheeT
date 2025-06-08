@@ -1,4 +1,3 @@
-export let playerImg = playerImagesByHP[20];
 
 export const playerImagesByHP = {
   20: new Image(),
@@ -12,7 +11,7 @@ playerImagesByHP[15].src = "./sprites/playerShip3_blue.png";     // Slight damag
 playerImagesByHP[10].src = "./sprites/playerShip3_orange.png";        // Heavy damage
 playerImagesByHP[5].src = "./sprites/playerShip3_red.png";   // Critical
 
-export function updatePlayerImage() {
+export function updatePlayerImage(player) {
   // Check if the player's HP is between the predefined thresholds
   if (player.hp >= 1 && player.hp <= 5) {
     playerImg = playerImagesByHP[5];
@@ -30,3 +29,5 @@ export function updatePlayerImage() {
     playerImg = playerImagesByHP[20]; // Full HP image
   }
 }
+
+export let playerImg = playerImagesByHP[20];

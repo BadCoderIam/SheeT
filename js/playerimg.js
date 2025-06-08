@@ -1,4 +1,3 @@
-export let playerImg = playerImagesByHP[20];
 
 export const playerImagesByHP = {
   20: new Image(),
@@ -30,3 +29,5 @@ export function updatePlayerImage() {
     playerImg = playerImagesByHP[20]; // Full HP image
   }
 }
+
+export let playerImg = playerImagesByHP[20];
