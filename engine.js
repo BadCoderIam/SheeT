@@ -4,6 +4,7 @@ import { applyGravityPull } from './gravity.js';
 import { updateBackground } from './levels.js';
 import { playerImg, playerImagesByHP, updatePlayerImage, player } from './playerimg.js';
 import * as audio from './audio.js';
+import { bullets, bulletImg, upgradedBulletImg, enemyBullets, enemyBulletImg, bulletImageRed, bulletImageGreen, currentBulletImage, setBulletImg } from './Bullets.js';
 
 
 (function () {
@@ -32,7 +33,6 @@ BossImagesByHP[50].src = "./sprites/enemyblack5.png";   // Critical
 let boss = null;
 const bossImage = new Image();
 bossImage.src = "./Sprites/enemyBlack5.png";
-const bulletImage = new Image();
     
 let gameStarted = false;
 let gameOver = false;
@@ -53,15 +53,11 @@ let flashTimer = 0;
     let highScore = localStorage.getItem('highScore') || 0;
     let BossImg = BossImagesByHP[300];
 
-    const bulletImg = new Image();
-    bulletImg.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAA2CAYAAAAVvbNoAAACbUlEQVR42nXVQUiTcRjH8adTlyDo1KWLndohcNv7vpuIuxgIeTCQEAyEPOwg4cGDgqAgIuTBYKCQKOZB3d61yGiI4dDEykrNcJTSaMlGlqNmLDVa8vQ+0A8egveFD2Pf/8Pe9/3vHSP6d8RNszdmWYvCNs2JmGm2YI3uVlScjQUCC/FAoPw/6bJOUdPsti3ryI2skzO967w5EK/7+w/319fLz7q6fqLJOkUtax9K+fyfk3KZfxWLJ7qTM52H8vExg+4ylIXfpRKD7jK0A85pGHQnOxDYgqNCgUF3ubsNONzbY9Cd4pa1CqVcjkF3cnZ2GX5kswy6kx0MpuAgk2HQXS58Dr5vbzPoLlswC9/SaQbdZeg+FDY3GXSXoWn4urbGoLvc3T34srrKoLt80ih8Xllh0J2cx3UY8ktLDLrL0B3IpVIMupPzwN+G3fl5Bt3J+WX0w6dkkkF3+Vp64OPsLIPuZBtGF2QSCQbdKWoYHfAhFmPQXX53t2BnaopBdxkKw/vJSQbdZZ9uwrvxcQbdKWYYNyA9Osqguwxdh62REQbdZZ+uwdtIhEF3sn2+q/BmaIhBd7L9/iuwMTjIoLucLgRrAwMMutOMYVTBq74+Bt1pprLSDy97ehh0p2mv9zK86O5m0J2iXu8leN7ZyaA7RX2+i7DS0cGgu1z4BVhub2fQnSY8nvPwtK2NQXcaCwbPwWI4zKA7DXs8ZyDV2sqgO0WITsNCSwuD7vL3cgqeNDcz6E76mG9qYiC3Y66xkcF1KNnQwOA69Li+nsF16FFdHYPr0MPaWgbXoURNTfFBKMTCdSheVdWbqK5medX9Lwgkf09Sr51zAAAALXRFWHRTb2Z0d2FyZQBieS5ibG9vZGR5LmNyeXB0by5pbWFnZS5QTkcyNEVuY29kZXKoBn/uAAAAAElFTkSuQmCC";
-
-    const upgradedBulletImg = new Image();
+    
 const fragmentImg = new Image();
 fragmentImg.src = "./Sprites/meteorGrey_tiny1.png";
 const brownFragmentImg = new Image();
 brownFragmentImg.src = "./Sprites/meteorBrown_tiny1.png";
-    upgradedBulletImg.src = "./Sprites/laserGreen12.png";
     const explosionImg = new Image();
     explosionImg.src = "./Sprites/Blank.png";
 
@@ -92,25 +88,9 @@ const meteorHPByImage = {
 };
 
 
-    const bullets = [];
     const meteors = [];
 
-const enemyBullets = [];
-const enemyBulletImg = new Image();
-enemyBulletImg.src = "./sprites/laserGreen12.png";
 
-const bulletImageRed = new Image();
-bulletImageRed.src = "./sprites/laserRed01.png";
-
-const bulletImageGreen = new Image();
-bulletImageGreen.src = "./sprites/laserGreen12.png";
-
-let currentBulletImage = bulletImageRed; 
-
-// Update player bullet image function
-function setBulletImg(upgraded) {
-    currentBulletImage = upgraded ? bulletImageGreen : bulletImageRed;
-}
 
     function spawnMeteor(playerX = canvas.width / 2, playerY = canvas.height / 2) {
   const availableImages = meteorImagesByLevel[level];
