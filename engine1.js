@@ -1,4 +1,7 @@
 // engine.js (core game logic)
+
+import { applyGravityPull } from './gravity.js';
+
 (function () {
 
 
