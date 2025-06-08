@@ -1,18 +1,7 @@
-// game.js (entry point)
-import './src/config.js';
-import './src/assets.js';
-import './src/input.js';
-import './src/player.js';
-import './src/meteors.js';
-import './src/bullets.js';
-import './src/boss.js';
-import './src/powerups.js';
-import './src/hud.js';
-import './src/background.js';
-import './src/collision.js';
-import './src/gameState.js';
-import './src/utils.js';
-import './src/main.js';
+// game.js (module loader)
+import './engine.js';
+import { applyGravityPull } from './gravity.js';
+import { timePowerup, powerup, upgraded, drawTimePowerup, drawPowerup, upgradeEndTime, upgradeEndTime, timePowerupsSpawned, bulletImageRed, upgradedBulletImg, bulletImageGreen, setBulletImg, setBulletImg } from './powerups.js';
 
 window.addEventListener('load', () => {
   const canvas = document.getElementById("gameCanvas");

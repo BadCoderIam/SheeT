@@ -1,7 +1,4 @@
 // engine.js (core game logic)
-import { applyGravityPull } from './gravity.js';
-import { timePowerup, powerup, upgraded, drawTimePowerup, drawPowerup, upgradeEndTime, timePowerupsSpawned, checkUpgradeTimeout, drawBullets, bulletImageRed, bulletImageGreen, setBulletImg, currentBulletImage } from './powerups.js';
-
 (function () {
 
 
@@ -51,20 +48,19 @@ BossImagesByHP[50].src = "./sprites/enemyblack5.png";   // Critical
 let boss = null;
 const bossImage = new Image();
 bossImage.src = "./Sprites/enemyBlack5.png";
-const bulletImage = new Image();
     
 let gameStarted = false;
 let gameOver = false;
 let meteorHP = 2;
 let ammo = 500;
-let bullets = [];
-let upgraded = false;
 const maxAmmo = 500;
 let keys = {};
 let shakeTimer = 0;
 let score = 0;
 let timeLeft = 100; // in seconds
 let timerInterval = null;
+let timePowerupsSpawned = 0;
+let maxTimePowerupsPerLevel = 2; // Change as needed
 let flashRed = false;
 let flashTimer = 0;
     let level = 1;
@@ -76,10 +72,12 @@ let flashTimer = 0;
     const bulletImg = new Image();
     bulletImg.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAA2CAYAAAAVvbNoAAACbUlEQVR42nXVQUiTcRjH8adTlyDo1KWLndohcNv7vpuIuxgIeTCQEAyEPOwg4cGDgqAgIuTBYKCQKOZB3d61yGiI4dDEykrNcJTSaMlGlqNmLDVa8vQ+0A8egveFD2Pf/8Pe9/3vHSP6d8RNszdmWYvCNs2JmGm2YI3uVlScjQUCC/FAoPw/6bJOUdPsti3ryI2skzO967w5EK/7+w/319fLz7q6fqLJOkUtax9K+fyfk3KZfxWLJ7qTM52H8vExg+4ylIXfpRKD7jK0A85pGHQnOxDYgqNCgUF3ubsNONzbY9Cd4pa1CqVcjkF3cnZ2GX5kswy6kx0MpuAgk2HQXS58Dr5vbzPoLlswC9/SaQbdZeg+FDY3GXSXoWn4urbGoLvc3T34srrKoLt80ih8Xllh0J2cx3UY8ktLDLrL0B3IpVIMupPzwN+G3fl5Bt3J+WX0w6dkkkF3+Vp64OPsLIPuZBtGF2QSCQbdKWoYHfAhFmPQXX53t2BnaopBdxkKw/vJSQbdZZ9uwrvxcQbdKWYYNyA9Osqguwxdh62REQbdZZ+uwdtIhEF3sn2+q/BmaIhBd7L9/iuwMTjIoLucLgRrAwMMutOMYVTBq74+Bt1pprLSDy97ehh0p2mv9zK86O5m0J2iXu8leN7ZyaA7RX2+i7DS0cGgu1z4BVhub2fQnSY8nvPwtK2NQXcaCwbPwWI4zKA7DXs8ZyDV2sqgO0WITsNCSwuD7vL3cgqeNDcz6E76mG9qYiC3Y66xkcF1KNnQwOA69Li+nsF16FFdHYPr0MPaWgbXoURNTfFBKMTCdSheVdWbqK5medX9Lwgkf09Sr51zAAAALXRFWHRTb2Z0d2FyZQBieS5ibG9vZGR5LmNyeXB0by5pbWFnZS5QTkcyNEVuY29kZXKoBn/uAAAAAElFTkSuQmCC";
 
+    const upgradedBulletImg = new Image();
 const fragmentImg = new Image();
 fragmentImg.src = "./Sprites/meteorGrey_tiny1.png";
 const brownFragmentImg = new Image();
 brownFragmentImg.src = "./Sprites/meteorBrown_tiny1.png";
+    upgradedBulletImg.src = "./Sprites/laserGreen12.png";
     const explosionImg = new Image();
     explosionImg.src = "./Sprites/Blank.png";
 
@@ -118,6 +116,7 @@ const meteorHPByImage = {
       hp: 20
     };
 
+    const bullets = [];
     const meteors = [];
 
 const enemyBullets = [];
@@ -182,7 +181,23 @@ enemyBulletImg.src = "./sprites/laserGreen12.png";
 }
 
     
+document.addEventListener('keydown', e => {
+  keys[e.code] = true;
 
+  if (e.code === "Space" && ammo > 0) {
+    if (upgraded) {
+      bullets.push({ x: player.x + player.width / 2 - 15, y: player.y, width: 10, height: 20, speed: 8 });
+      bullets.push({ x: player.x + player.width / 2 + 5, y: player.y, width: 10, height: 20, speed: 8 });
+      ammo -= 2;
+    } else {
+      bullets.push({ x: player.x + player.width / 2 - 5, y: player.y, width: 10, height: 20, speed: 8 });
+      ammo--;
+    }
+
+    playLaser();
+    updateAmmoDisplay();
+  }
+});
 function updateBackground() {
     let bg = "./levels/background1.gif";
     if (level >= 2) bg = "./levels/background2.gif";
@@ -234,21 +249,20 @@ function updateScore() {
       ctx.drawImage(playerImg, player.x, player.y, player.width, player.height);
     }
 
-
-    function drawBullets(bullets, ctx, canvas, player, ammo, maxAmmo, updateAmmoDisplay, setBulletImg, playShieldUp) {
-       if (!Array.isArray(bullets)) {
-    console.error('bullets is not an array:', bullets);
-    return;
+    function drawBullets() {
+      bullets.forEach((b, i) => {
+        b.y -= b.speed;
+        const img = upgraded ? upgradedBulletImg : bulletImg;
+        ctx.drawImage(bulletImg, b.x, b.y, b.width, b.height);
+        if (b.y < 0) bullets.splice(i, 1);
+      });
+    }
+function checkUpgradeTimeout() {
+  if (upgraded && Date.now() > upgradeEndTime) {
+    upgraded = false;
+    setBulletImg(false); // switch to default bullet
   }
-
-  bullets.forEach((b, i) => {
-    b.y -= b.speed;
-    ctx.drawImage(currentBulletImage, b.x, b.y, b.width, b.height);
-    if (b.y < 0) bullets.splice(i, 1);
-  });
 }
-
-    
     
 function spawnFragments(x, y, fragmentImage) {
   for (let i = 0; i < 3; i++) {
@@ -440,10 +454,10 @@ handleMovement();
 checkCollisions();
 
       drawPlayer();
-      drawBullets(bullets, ctx, currentBulletImage);
+      drawBullets();
       drawMeteors();
       drawBoss();
-      applyGravityPull(canvas, player, level, updateHealthBar, updatePlayerImage, playShieldDown, val => shakeTimer = val);
+      applyGravityPull();
       drawEnemyBullets();
 requestAnimationFrame(gameLoop);
     }
@@ -533,7 +547,10 @@ setInterval(() => {
   gameLoop();
 };
 
-
+  
+document.addEventListener('keyup', e => {
+  keys[e.code] = false;
+});
 
 function startTimer() {
   document.getElementById("timerText").innerText = `Time: ${timeLeft}`;
@@ -740,7 +757,7 @@ function startGame() {
         drawTimePowerup();
         updateHealthBar();
         updateAmmoDisplay();
-        applyGravityPull(canvas, player, level, updateHealthBar, updatePlayerImage, playShieldDown, val => shakeTimer = val);
+        applyGravityPull();
         checkUpgradeTimeout();
         requestAnimationFrame(gameLoop);
     } else {
@@ -753,11 +770,263 @@ gameLoop = function () {
     drawPowerup();
     drawTimePowerup();
     updateHealthBar();
-    applyGravityPull(canvas, player, level, updateHealthBar, updatePlayerImage, playShieldDown, val => shakeTimer = val);
+    applyGravityPull();
     updateAmmoDisplay();
     checkUpgradeTimeout();
 };
 
+// === Powerup and Bullet Upgrade Logic ===
+let timePowerup = {
+  x: Math.random() * canvas.width,
+  y: -50,
+  width: 32,
+  height: 32,
+  image: new Image(),
+  active: false,
+  spawnTime: Date.now() + 20000 + Math.random() * 15000 
+};
+timePowerup.image.src = "./sprites/powerupGreen_star.png";
+
+let powerup = {
+    x: Math.random() * canvas.width,
+    y: -50,
+    width: 32,
+    height: 32,
+    image: new Image(),
+    active: false,
+    spawnTime: Date.now() + 10000 + Math.random() * 10000
+};
+powerup.image.src = "./sprites/powerupBlue_bolt.png";
+
+let upgraded = false;
+let upgradeEndTime = 0;
+
+function applyGravityPull() {
+  const centerX = canvas.width / 2;
+  const centerY = canvas.height / 2;
+
+  if (level === 3 || level === 6) {
+    const dx = centerX - (player.x + player.width / 2);
+    const dy = centerY - (player.y + player.height / 2);
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    // Gentle gravity
+    const gravityStrength = (level === 6) ? 0.00045 : 0.00025;
+    const dirX = dx / distance;
+    const dirY = dy / distance;
+
+    // Initialize velocity if not present
+    if (player.xVelocity === undefined) player.xVelocity = 0;
+    if (player.yVelocity === undefined) player.yVelocity = 0;
+
+    // Apply force
+    const pull = Math.min(gravityStrength * distance, 0.5);
+    player.xVelocity += dirX * pull;
+    player.yVelocity += dirY * pull;
+
+    // Damping and max speed
+    player.xVelocity *= 0.85;
+    player.yVelocity *= 0.85;
+    const maxSpeed = 2;
+    player.xVelocity = Math.max(-maxSpeed, Math.min(maxSpeed, player.xVelocity));
+    player.yVelocity = Math.max(-maxSpeed, Math.min(maxSpeed, player.yVelocity));
+
+    // Apply movement
+    player.x += player.xVelocity;
+    player.y += player.yVelocity;
+
+    // === Burn zone logic ===
+    const deathRadius = (level === 6) ? 140 : 100;
+    const now = Date.now();
+
+    if (distance < deathRadius) {
+      // 💥 Shake effect
+      shakeTimer = 10;
+
+      // 🔥 Burn damage timer
+      if (player.lastGravityDamage === undefined) {
+        player.lastGravityDamage = now;
+      }
+
+      if (now - player.lastGravityDamage >= 1000) {
+        player.hp = Math.max(0, player.hp - 1);
+        updateHealthBar();
+        updatePlayerImage();
+        playShieldDown();
+        player.lastGravityDamage = now;
+
+        // Optional: Display burn message
+        console.log("🔥 Burning in gravity core!");
+      }
+    } else {
+      // Reset burn timer when out of range
+      player.lastGravityDamage = undefined;
+    }
+  }
+
+  // Level 4 rightward gravity
+  if (level === 4) {
+  const gravityForce = 0.02;
+
+  if (player.xVelocity === undefined) player.xVelocity = 0;
+
+  // Apply rightward gravity
+  player.xVelocity += gravityForce;
+  player.xVelocity *= 0.95;
+  player.x += player.xVelocity;
+
+  // Clamp player inside canvas
+  if (player.x > canvas.width - player.width) {
+    player.x = canvas.width - player.width;
+    player.xVelocity = 0;
+  }
+
+  // === Right-side Burn Zone ===
+  const burnZoneStartX = canvas.width - 200; // starts 120px from right edge
+  const burnDamageRate = 2000; // 2 seconds
+  const now = Date.now();
+
+  const playerRight = player.x + player.width;
+
+  if (playerRight > burnZoneStartX) {
+    // Shake effect
+    shakeTimer = 10;
+
+    // Burn damage logic
+    if (player.lastGravityDamage === undefined) {
+      player.lastGravityDamage = now;
+    }
+
+    if (now - player.lastGravityDamage >= burnDamageRate) {
+      player.hp = Math.max(0, player.hp - 1);
+      updateHealthBar();
+      updatePlayerImage();
+      playShieldDown();
+      player.lastGravityDamage = now;
+
+      console.log("🔥 Burning in right-side gravity zone!");
+    }
+  } else {
+    // Reset timer if outside burn zone
+    player.lastGravityDamage = undefined;
+  }
+}
+
+  // Reset velocity outside level 3 or 4
+  if (level !== 3 && level !== 4 && level !== 6) {
+    player.xVelocity = 0;
+    player.yVelocity = 0;
+  }
+}
+
+
+// Update player bullet image function
+function setBulletImg(upgraded) {
+    bulletImage.src = Upgraded ? "./sprites/laserGreen12.png" : "./sprites/laserRed01.png";
+}
+
+// Spawn and draw powerup
+function drawPowerup() {
+  const now = Date.now();
+
+  // Spawn if time passed and not active
+  if (now > powerup.spawnTime && !powerup.active) {
+    powerup.x = Math.random() * (canvas.width - powerup.width);
+    powerup.y = -50;
+    powerup.active = true;
+  }
+
+  if (powerup.active) {
+    powerup.y += 2;
+    ctx.drawImage(powerup.image, powerup.x, powerup.y, powerup.width, powerup.height);
+
+    // Collision with player
+    if (
+      player.x < powerup.x + powerup.width &&
+      player.x + player.width > powerup.x &&
+      player.y < powerup.y + powerup.height &&
+      player.y + player.height > powerup.y
+    ) {
+      powerup.active = false;
+
+      // Apply powerup effect
+      upgraded = true;
+      upgradeEndTime = Date.now() + 10000;
+      ammo = Math.min(ammo + 200, maxAmmo);
+      updateAmmoDisplay();
+      setBulletImage(true);
+      playShieldUp();
+
+      // 🔁 Set next spawn time (15–25 seconds later)
+      powerup.spawnTime = now + 15000 + Math.random() * 10000;
+    }
+
+    // Despawn if off screen
+    if (powerup.y > canvas.height) {
+      powerup.active = false;
+
+      // 🔁 Set next spawn time (if missed)
+      powerup.spawnTime = now + 15000 + Math.random() * 10000;
+    }
+  }
+}
+
+function drawTimePowerup() {
+  const now = Date.now();
+
+  // Only spawn if:
+  // - Time to spawn has passed
+  // - Powerup isn't active
+  // - Fewer than the max allowed have spawned this level
+  if (
+    now > timePowerup.spawnTime &&
+    !timePowerup.active &&
+    timePowerupsSpawned < maxTimePowerupsPerLevel
+  ) {
+    timePowerup.x = Math.random() * (canvas.width - timePowerup.width);
+    timePowerup.y = -50;
+    timePowerup.active = true;
+    timePowerupsSpawned++;
+  }
+
+  if (timePowerup.active) {
+    timePowerup.y += 4;
+    ctx.drawImage(timePowerup.image, timePowerup.x, timePowerup.y, timePowerup.width, timePowerup.height);
+
+    // Collision with player
+    if (
+      player.x < timePowerup.x + timePowerup.width &&
+      player.x + player.width > timePowerup.x &&
+      player.y < timePowerup.y + timePowerup.height &&
+      player.y + player.height > timePowerup.y
+    ) {
+      timePowerup.active = false;
+      timeLeft += 25;
+      if (timeLeft > 999) timeLeft = 999;
+
+      player.hp = Math.min(player.hp + 4, 20);
+       updateHealthBar();      // Updates HUD
+       updatePlayerImage(); 
+
+      const timerDisplay = document.getElementById("timerText");
+      timerDisplay.innerText = `Time: ${timeLeft}`;
+      timerDisplay.classList.add("flash");
+      setTimeout(() => timerDisplay.classList.remove("flash"), 3000);
+
+      playShieldUp();
+
+      // Set a new delayed spawn time (no back-to-back spawn)
+      timePowerup.spawnTime = now + 15000 + Math.random() * 10000; // 15–25 sec delay
+    }
+
+    // Despawn if off screen
+    if (timePowerup.y > canvas.height) {
+      timePowerup.active = false;
+      // Set delayed spawn time even if missed
+      timePowerup.spawnTime = now + 15000 + Math.random() * 10000;
+    }
+  }
+}
 
 
 function drawEnemyBullets() {
