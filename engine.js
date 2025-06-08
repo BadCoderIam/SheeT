@@ -2,7 +2,7 @@
 
 import { applyGravityPull } from './gravity.js';
 import { updateBackground } from './levels.js';
-import { playerImg, playerImagesByHP, updatePlayerImage } from './playerimg.js';
+import { playerImg, playerImagesByHP, updatePlayerImage, player } from './playerimg.js';
 import * as audio from './audio.js';
 
 
@@ -91,14 +91,6 @@ const meteorHPByImage = {
   "./Sprites/METEORITE-ELEMENTONLY-s.gif": 6
 };
 
-    const player = {
-      x: canvas.width / 2 - 25,
-      y: canvas.height - 100,
-      width: 80,
-      height: 80,
-      speed: 10,
-      hp: 20
-    };
 
     const bullets = [];
     const meteors = [];

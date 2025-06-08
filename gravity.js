@@ -1,3 +1,6 @@
+   import { playerImg, playerImagesByHP, updatePlayerImage, player } from './playerimg.js';
+   import * as audio from './audio.js';
+   
    export function applyGravityPull(canvas, player, level, updateHealthBar, updatePlayerImage, playShieldDown, shakeTimerSetter) {
   const centerX = canvas.width / 2;
   const centerY = canvas.height / 2;
@@ -48,8 +51,8 @@
       if (now - player.lastGravityDamage >= 1000) {
         player.hp = Math.max(0, player.hp - 1);
         updateHealthBar();
-        updatePlayerImage();
-        playShieldDown();
+        updatePlayerImage(player);
+        audio.playShieldDown();
         player.lastGravityDamage = now;
 
         // Optional: Display burn message
@@ -98,8 +101,8 @@
     if (now - player.lastGravityDamage >= burnDamageRate) {
       player.hp = Math.max(0, player.hp - 1);
       updateHealthBar();
-      updatePlayerImage();
-      playShieldDown();
+      updatePlayerImage(player);
+      audio.playShieldDown();
       player.lastGravityDamage = now;
 
       console.log("🔥 Burning in right-side gravity zone!");
