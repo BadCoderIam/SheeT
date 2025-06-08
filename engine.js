@@ -1,6 +1,8 @@
 // engine.js (core game logic)
+
 import { applyGravityPull } from './gravity.js';
-import { timePowerup, powerup, upgraded, drawTimePowerup, drawPowerup, upgradeEndTime, timePowerupsSpawned, checkUpgradeTimeout, drawBullets, bulletImageRed, bulletImageGreen, setBulletImg, currentBulletImage } from './powerups.js';
+import { updateBackground } from './levels.js';
+import { playerImg, playerImagesByHP, updatePlayerImage } from './playerimg.js';
 
 (function () {
 
@@ -15,17 +17,6 @@ import { timePowerup, powerup, upgraded, drawTimePowerup, drawPowerup, upgradeEn
     };
   }
 
-const playerImagesByHP = {
-  20: new Image(),
-  15: new Image(),
-  10: new Image(),
-  5: new Image()
-};
-
-playerImagesByHP[20].src = "./sprites/playerShip3_green.png";     // Full HP
-playerImagesByHP[15].src = "./sprites/playerShip3_blue.png";     // Slight damage
-playerImagesByHP[10].src = "./sprites/playerShip3_orange.png";        // Heavy damage
-playerImagesByHP[5].src = "./sprites/playerShip3_red.png";   // Critical
 
 const BossImagesByHP = {
   300: new Image(),
@@ -33,6 +24,7 @@ const BossImagesByHP = {
   100: new Image(),
   50: new Image()
 };
+
 
 BossImagesByHP[300].src = "./sprites/enemyGreen5.png";     // Full HP
 BossImagesByHP[200].src = "./sprites/enemyblue5.png";     // Slight damage
@@ -57,29 +49,30 @@ let gameStarted = false;
 let gameOver = false;
 let meteorHP = 2;
 let ammo = 500;
-let bullets = [];
-let upgraded = false;
 const maxAmmo = 500;
 let keys = {};
 let shakeTimer = 0;
 let score = 0;
 let timeLeft = 100; // in seconds
 let timerInterval = null;
+let timePowerupsSpawned = 0;
+let maxTimePowerupsPerLevel = 2; // Change as needed
 let flashRed = false;
 let flashTimer = 0;
     let level = 1;
     const maxLevel = 6;
     let highScore = localStorage.getItem('highScore') || 0;
-    let playerImg = playerImagesByHP[20];
     let BossImg = BossImagesByHP[300];
 
     const bulletImg = new Image();
     bulletImg.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAA2CAYAAAAVvbNoAAACbUlEQVR42nXVQUiTcRjH8adTlyDo1KWLndohcNv7vpuIuxgIeTCQEAyEPOwg4cGDgqAgIuTBYKCQKOZB3d61yGiI4dDEykrNcJTSaMlGlqNmLDVa8vQ+0A8egveFD2Pf/8Pe9/3vHSP6d8RNszdmWYvCNs2JmGm2YI3uVlScjQUCC/FAoPw/6bJOUdPsti3ryI2skzO967w5EK/7+w/319fLz7q6fqLJOkUtax9K+fyfk3KZfxWLJ7qTM52H8vExg+4ylIXfpRKD7jK0A85pGHQnOxDYgqNCgUF3ubsNONzbY9Cd4pa1CqVcjkF3cnZ2GX5kswy6kx0MpuAgk2HQXS58Dr5vbzPoLlswC9/SaQbdZeg+FDY3GXSXoWn4urbGoLvc3T34srrKoLt80ih8Xllh0J2cx3UY8ktLDLrL0B3IpVIMupPzwN+G3fl5Bt3J+WX0w6dkkkF3+Vp64OPsLIPuZBtGF2QSCQbdKWoYHfAhFmPQXX53t2BnaopBdxkKw/vJSQbdZZ9uwrvxcQbdKWYYNyA9Osqguwxdh62REQbdZZ+uwdtIhEF3sn2+q/BmaIhBd7L9/iuwMTjIoLucLgRrAwMMutOMYVTBq74+Bt1pprLSDy97ehh0p2mv9zK86O5m0J2iXu8leN7ZyaA7RX2+i7DS0cGgu1z4BVhub2fQnSY8nvPwtK2NQXcaCwbPwWI4zKA7DXs8ZyDV2sqgO0WITsNCSwuD7vL3cgqeNDcz6E76mG9qYiC3Y66xkcF1KNnQwOA69Li+nsF16FFdHYPr0MPaWgbXoURNTfFBKMTCdSheVdWbqK5medX9Lwgkf09Sr51zAAAALXRFWHRTb2Z0d2FyZQBieS5ibG9vZGR5LmNyeXB0by5pbWFnZS5QTkcyNEVuY29kZXKoBn/uAAAAAElFTkSuQmCC";
 
+    const upgradedBulletImg = new Image();
 const fragmentImg = new Image();
 fragmentImg.src = "./Sprites/meteorGrey_tiny1.png";
 const brownFragmentImg = new Image();
 brownFragmentImg.src = "./Sprites/meteorBrown_tiny1.png";
+    upgradedBulletImg.src = "./Sprites/laserGreen12.png";
     const explosionImg = new Image();
     explosionImg.src = "./Sprites/Blank.png";
 
@@ -118,12 +111,25 @@ const meteorHPByImage = {
       hp: 20
     };
 
+    const bullets = [];
     const meteors = [];
 
 const enemyBullets = [];
 const enemyBulletImg = new Image();
 enemyBulletImg.src = "./sprites/laserGreen12.png";
 
+const bulletImageRed = new Image();
+bulletImageRed.src = "./sprites/laserRed01.png";
+
+const bulletImageGreen = new Image();
+bulletImageGreen.src = "./sprites/laserGreen12.png";
+
+let currentBulletImage = bulletImageRed; 
+
+// Update player bullet image function
+function setBulletImg(upgraded) {
+    currentBulletImage = upgraded ? bulletImageGreen : bulletImageRed;
+}
 
     function spawnMeteor(playerX = canvas.width / 2, playerY = canvas.height / 2) {
   const availableImages = meteorImagesByLevel[level];
@@ -182,19 +188,23 @@ enemyBulletImg.src = "./sprites/laserGreen12.png";
 }
 
     
+document.addEventListener('keydown', e => {
+  keys[e.code] = true;
 
-function updateBackground() {
-    let bg = "./levels/background1.gif";
-    if (level >= 2) bg = "./levels/background2.gif";
-if (level >= 3) bg = "./levels/background3.gif";
-if (level >= 4) bg = "./levels/background4.gif";
-if (level >= 5) bg = "./levels/background5.gif";
-if (level >= 6) bg = "./levels/background3.gif";
-    document.body.style.backgroundImage = `url('${bg}')`;
-    document.body.style.backgroundSize = "cover";
-    document.body.style.backgroundRepeat = "no-repeat";
-    document.body.style.backgroundPosition = "center center";
-}
+  if (e.code === "Space" && ammo > 0) {
+    if (upgraded) {
+      bullets.push({ x: player.x + player.width / 2 - 15, y: player.y, width: 10, height: 20, speed: 8 });
+      bullets.push({ x: player.x + player.width / 2 + 5, y: player.y, width: 10, height: 20, speed: 8 });
+      ammo -= 2;
+    } else {
+      bullets.push({ x: player.x + player.width / 2 - 5, y: player.y, width: 10, height: 20, speed: 8 });
+      ammo--;
+    }
+
+    playLaser();
+    updateAmmoDisplay();
+  }
+});
     
 
 function updateScore() {
@@ -234,21 +244,20 @@ function updateScore() {
       ctx.drawImage(playerImg, player.x, player.y, player.width, player.height);
     }
 
-
-    function drawBullets(bullets, ctx, canvas, player, ammo, maxAmmo, updateAmmoDisplay, setBulletImg, playShieldUp) {
-       if (!Array.isArray(bullets)) {
-    console.error('bullets is not an array:', bullets);
-    return;
+    function drawBullets() {
+      bullets.forEach((b, i) => {
+        b.y -= b.speed;
+        const img = upgraded ? upgradedBulletImg : bulletImg;
+        ctx.drawImage(currentBulletImage, b.x, b.y, b.width, b.height);
+        if (b.y < 0) bullets.splice(i, 1);
+      });
+    }
+function checkUpgradeTimeout() {
+  if (upgraded && Date.now() > upgradeEndTime) {
+    upgraded = false;
+    setBulletImg(false); // switch to default bullet
   }
-
-  bullets.forEach((b, i) => {
-    b.y -= b.speed;
-    ctx.drawImage(currentBulletImage, b.x, b.y, b.width, b.height);
-    if (b.y < 0) bullets.splice(i, 1);
-  });
 }
-
-    
     
 function spawnFragments(x, y, fragmentImage) {
   for (let i = 0; i < 3; i++) {
@@ -440,7 +449,7 @@ handleMovement();
 checkCollisions();
 
       drawPlayer();
-      drawBullets(bullets, ctx, currentBulletImage);
+      drawBullets();
       drawMeteors();
       drawBoss();
       applyGravityPull(canvas, player, level, updateHealthBar, updatePlayerImage, playShieldDown, val => shakeTimer = val);
@@ -533,7 +542,10 @@ setInterval(() => {
   gameLoop();
 };
 
-
+  
+document.addEventListener('keyup', e => {
+  keys[e.code] = false;
+});
 
 function startTimer() {
   document.getElementById("timerText").innerText = `Time: ${timeLeft}`;
@@ -576,24 +588,6 @@ function updateAmmoDisplay() {
   document.getElementById('ammoDisplay').innerText = `🔫 Ammo: ${ammo}`;
 }
 
-function updatePlayerImage() {
-  // Check if the player's HP is between the predefined thresholds
-  if (player.hp >= 1 && player.hp <= 5) {
-    playerImg = playerImagesByHP[5];
-  }
-  else if (player.hp > 4 && player.hp <= 10) {
-    playerImg = playerImagesByHP[5]; // Critical damage image
-  }
-  else if (player.hp > 10 && player.hp <= 15) {
-    playerImg = playerImagesByHP[10]; // Heavy damage image
-  }
-  else if (player.hp > 15 && player.hp <= 20) {
-    playerImg = playerImagesByHP[15]; // Slight damage image
-  }
-  else if (player.hp > 20) {
-    playerImg = playerImagesByHP[20]; // Full HP image
-  }
-}
 const maxHP = 20;
 const maxBarWidth = 300;
 
@@ -758,6 +752,134 @@ gameLoop = function () {
     checkUpgradeTimeout();
 };
 
+// === Powerup and Bullet Upgrade Logic ===
+let timePowerup = {
+  x: Math.random() * canvas.width,
+  y: -50,
+  width: 32,
+  height: 32,
+  image: new Image(),
+  active: false,
+  spawnTime: Date.now() + 20000 + Math.random() * 15000 
+};
+timePowerup.image.src = "./sprites/powerupGreen_star.png";
+
+let powerup = {
+    x: Math.random() * canvas.width,
+    y: -50,
+    width: 32,
+    height: 32,
+    image: new Image(),
+    active: false,
+    spawnTime: Date.now() + 10000 + Math.random() * 10000
+};
+powerup.image.src = "./sprites/powerupBlue_bolt.png";
+
+let upgraded = false;
+let upgradeEndTime = 0;
+
+// Spawn and draw powerup
+function drawPowerup() {
+  const now = Date.now();
+
+  // Spawn if time passed and not active
+  if (now > powerup.spawnTime && !powerup.active) {
+    powerup.x = Math.random() * (canvas.width - powerup.width);
+    powerup.y = -50;
+    powerup.active = true;
+  }
+
+  if (powerup.active) {
+    powerup.y += 2;
+    ctx.drawImage(powerup.image, powerup.x, powerup.y, powerup.width, powerup.height);
+
+    // Collision with player
+    if (
+      player.x < powerup.x + powerup.width &&
+      player.x + player.width > powerup.x &&
+      player.y < powerup.y + powerup.height &&
+      player.y + player.height > powerup.y
+    ) {
+      powerup.active = false;
+
+      // Apply powerup effect
+      upgraded = true;
+      upgradeEndTime = Date.now() + 10000;
+      ammo = Math.min(ammo + 200, maxAmmo);
+      updateAmmoDisplay();
+      setBulletImg(true);
+      playShieldUp();
+
+      // 🔁 Set next spawn time (15–25 seconds later)
+      powerup.spawnTime = now + 15000 + Math.random() * 10000;
+    }
+
+    // Despawn if off screen
+    if (powerup.y > canvas.height) {
+      powerup.active = false;
+
+      // 🔁 Set next spawn time (if missed)
+      powerup.spawnTime = now + 15000 + Math.random() * 10000;
+    }
+  }
+}
+
+function drawTimePowerup() {
+  const now = Date.now();
+
+  // Only spawn if:
+  // - Time to spawn has passed
+  // - Powerup isn't active
+  // - Fewer than the max allowed have spawned this level
+  if (
+    now > timePowerup.spawnTime &&
+    !timePowerup.active &&
+    timePowerupsSpawned < maxTimePowerupsPerLevel
+  ) {
+    timePowerup.x = Math.random() * (canvas.width - timePowerup.width);
+    timePowerup.y = -50;
+    timePowerup.active = true;
+    timePowerupsSpawned++;
+  }
+
+  if (timePowerup.active) {
+    timePowerup.y += 4;
+    ctx.drawImage(timePowerup.image, timePowerup.x, timePowerup.y, timePowerup.width, timePowerup.height);
+
+    // Collision with player
+    if (
+      player.x < timePowerup.x + timePowerup.width &&
+      player.x + player.width > timePowerup.x &&
+      player.y < timePowerup.y + timePowerup.height &&
+      player.y + player.height > timePowerup.y
+    ) {
+      timePowerup.active = false;
+      timeLeft += 25;
+      if (timeLeft > 999) timeLeft = 999;
+
+      player.hp = Math.min(player.hp + 4, 20);
+       updateHealthBar();      // Updates HUD
+       updatePlayerImage(); 
+
+      const timerDisplay = document.getElementById("timerText");
+      timerDisplay.innerText = `Time: ${timeLeft}`;
+      timerDisplay.classList.add("flash");
+      setTimeout(() => timerDisplay.classList.remove("flash"), 3000);
+
+      playShieldUp();
+
+      // Set a new delayed spawn time (no back-to-back spawn)
+      timePowerup.spawnTime = now + 15000 + Math.random() * 10000; // 15–25 sec delay
+    }
+
+    // Despawn if off screen
+    if (timePowerup.y > canvas.height) {
+      timePowerup.active = false;
+      // Set delayed spawn time even if missed
+      timePowerup.spawnTime = now + 15000 + Math.random() * 10000;
+    }
+  }
+}
 
 
 function drawEnemyBullets() {
