@@ -2,13 +2,23 @@
 
 import { applyGravityPull } from './gravity.js';
 import { updateBackground } from './levels.js';
+import { updateScore } from './UI.js';
+import { baseHp } from './state.js';
 import { playerImg, playerImagesByHP, updatePlayerImage, player } from './playerimg.js';
 import * as audio from './audio.js';
 import { bullets, bulletImg, upgradedBulletImg, enemyBullets, enemyBulletImg, bulletImageRed, bulletImageGreen, currentBulletImage, setBulletImg } from './Bullets.js';
+import {
+  meteors,
+  setMeteorState,
+  spawnMeteor,
+  drawMeteors,
+  spawnFragments,
+  updateMeteorAttacks, 
+  checkMeteorCollisions, getScore, getHighScore, setMeteorLevelRef
+} from './meteors.js';
 
 
 (function () {
-
 
 
 
@@ -35,6 +45,8 @@ const bossImage = new Image();
 bossImage.src = "./Sprites/enemyBlack5.png";
     
 let gameStarted = false;
+let level = 1;
+let levelRef = { value: level };
 let gameOver = false;
 let meteorHP = 2;
 let ammo = 500;
@@ -48,7 +60,7 @@ let timePowerupsSpawned = 0;
 let maxTimePowerupsPerLevel = 2; // Change as needed
 let flashRed = false;
 let flashTimer = 0;
-    let level = 1;
+
     const maxLevel = 6;
     let highScore = localStorage.getItem('highScore') || 0;
     let BossImg = BossImagesByHP[300];
@@ -88,65 +100,10 @@ const meteorHPByImage = {
 };
 
 
-    const meteors = [];
+    
 
 
 
-    function spawnMeteor(playerX = canvas.width / 2, playerY = canvas.height / 2) {
-  const availableImages = meteorImagesByLevel[level];
-  const imgSrc = availableImages[Math.floor(Math.random() * availableImages.length)];
-  const img = new Image();
-  img.src = imgSrc;
-
-  let size = Math.random() * 40 + 30;
-  const baseHp = meteorHPByImage[imgSrc] || 1;
-  let hp = baseHp + (level - 1);
-
-  let x = Math.random() * (canvas.width - size);
-  let y = -size;
-  let vx = 0;
-  let vy = Math.random() * 3 + 1;
-
-  const isRogueMeteor = (level >= 3 && level <= 6) && Math.random() < 0.1;
-
-  if (isRogueMeteor) {
-    size *= 1.5;
-    hp *= 1;
-    img.src = rogueMeteorImage.src;
-
-    // Spawn from a random corner
-    const corner = Math.floor(Math.random() * 4);
-    switch (corner) {
-      case 0: x = 0; y = 0; break;
-      case 1: x = canvas.width - size; y = 0; break;
-      case 2: x = 0; y = canvas.height - size; break;
-      case 3: x = canvas.width - size; y = canvas.height - size; break;
-    }
-
-    // Always move diagonally from the corner
-    const diagSpeed = 2.5;
-    switch (corner) {
-      case 0: vx = diagSpeed; vy = diagSpeed; break;         // Top-left
-      case 1: vx = -diagSpeed; vy = diagSpeed; break;        // Top-right
-      case 2: vx = diagSpeed; vy = -diagSpeed; break;        // Bottom-left
-      case 3: vx = -diagSpeed; vy = -diagSpeed; break;       // Bottom-right
-    }
-  }
-
-  meteors.push({
-    x: x,
-    y: y,
-    width: size,
-    height: size,
-    speed: vy, // fallback for old logic
-    vx: vx || 0,
-    vy: vy || 0,
-    hp: hp,
-    img: img,
-    lastShotTime: Date.now(),
-    isRogue: isRogueMeteor
-  });
-}
 
     
 document.addEventListener('keydown', e => {
@@ -168,42 +125,6 @@ document.addEventListener('keydown', e => {
 });
     
 
-function updateScore() {
-  if (score >= level * 100 && level < maxLevel) {
-    level++;
-    timePowerupsSpawned = 0;
-    timePowerup.spawnTime = Date.now() + 10000 + Math.random() * 5000;
-    updateBackground(level);
-
-    // Spawn boss on level 6
-    if (level === 6) {
-      boss = {
-        x: canvas.width / 2 - 100,
-        y: 50,
-        width: 200,
-        height: 200,
-        hp: 300,
-        dx: 2,
-        img: bossImage,
-        lastShotTime: Date.now()
-      };
-    }
-  }
-
-
-  // Do NOT trigger gameOver here unless score caps out and no boss is expected
-  if (score >= 2000 && !boss) {
-    gameOver = true;
-    document.getElementById("startScreen").style.display = "flex";
-    document.getElementById("startScreen").innerHTML = `<h1>You WON! Good Jeb SheeTy!</h1><p>Score: ${score}</p><p>High Score: ${highScore}</p><p>Level: ${level}</p><button onclick="location.reload()">Restart</button>`;
-  }
-
-  document.getElementById("scoreDisplay").innerText = `Score: ${score} | High Score: ${highScore} | Level: ${level}`;
-}
-
-    function drawPlayer() {
-      ctx.drawImage(playerImg, player.x, player.y, player.width, player.height);
-    }
 
     function drawBullets() {
       bullets.forEach((b, i) => {
@@ -220,102 +141,9 @@ function checkUpgradeTimeout() {
   }
 }
     
-function spawnFragments(x, y, fragmentImage) {
-  for (let i = 0; i < 3; i++) {
-    const angle = Math.random() * 2 * Math.PI;
-    const speed = Math.random() * 2 + 1;
-    meteors.push({
-      x: x,
-      y: y,
-      width: 25,
-      height: 25,
-      speed: speed,
-      vx: Math.cos(angle) * speed,
-      vy: Math.sin(angle) * speed,
-      hp: 1,
-      img: fragmentImage,
-      isFragment: true
-    });
-  }
-}
 
-function drawMeteors() {
-  for (let mi = meteors.length - 1; mi >= 0; mi--) {
-    const m = meteors[mi];
 
-    // Update position
-    m.x += m.vx || 0;
-    m.y += m.vy || m.speed || 0;
 
-    // Remove if off-screen
-    if (
-      m.x + m.width < 0 || m.x > canvas.width || 
-      m.y + m.height < 0 || m.y > canvas.height
-    ) {
-      meteors.splice(mi, 1);
-      continue;
-    }
-
-    // Draw meteor
-    ctx.drawImage(m.img, m.x, m.y, m.width, m.height);
-
-    // Bullet collision
-    for (let bi = bullets.length - 1; bi >= 0; bi--) {
-      const b = bullets[bi];
-      if (
-        b.x < m.x + m.width &&
-        b.x + b.width > m.x &&
-        b.y < m.y + m.height &&
-        b.y + b.height > m.y
-      ) {
-        m.hp--;
-        bullets.splice(bi, 1);
-        ctx.drawImage(explosionImg, m.x, m.y, m.width, m.height);
-        audio.playExplosion();
-
-        if (m.hp <= 0) {
-          let meteorPoints = 0;
-
-          // 🎯 Score logic for rogues
-          if (m.isRogue) {
-            meteorPoints = 50;
-          } else if (m.hp > 3) {
-            meteorPoints = 30;
-          } else if (m.hp > 2) {
-            meteorPoints = 15;
-          } else {
-            meteorPoints = 5;
-          }
-
-          // 🔄 Fragment logic only for regular meteors
-          if (!m.isRogue) {
-            if (m.img.src.includes("meteorGrey_big1.png")) {
-              spawnFragments(m.x, m.y, fragmentImg);
-            } else if (m.img.src.includes("meteorBrown_big2.png")) {
-              spawnFragments(m.x, m.y, brownFragmentImg);
-            }
-          }
-
-          meteors.splice(mi, 1);
-          score += meteorPoints;
-          updateScore();
-        }
-
-        if (score > highScore) {
-          highScore = score;
-          localStorage.setItem('highScore', highScore);
-        }
-
-        break;
-      }
-    }
-
-    // Cleanup fallback
-    if (m.y > canvas.height) {
-      meteors.splice(mi, 1);
-    }
-  }
-}
 
 function drawBoss() {
   if (!boss) return;
@@ -387,7 +215,18 @@ ctx.strokeRect(barX, barY, barWidth, barHeight);
       bullets.splice(i, 1);
       boss.hp -= 1;
       score += 1;
-      updateScore();
+      updateScore(
+  levelRef,
+  level,
+  maxLevel,
+  { value: boss }, // boss as a reference
+  () => { gameOver = true; timerDisplay.classList.remove("pulsing"); }, // gameOverCallback
+  updateBackground,
+  { value: timePowerupsSpawned }, // timePowerupsSpawnedRef
+  timePowerup,
+  bossImage
+);
+level = levelRef.value;
       ctx.drawImage(explosionImg, b.x, b.y, 30, 30);
       audio.playExplosion();
 
@@ -408,12 +247,37 @@ ctx.clearRect(0, 0, canvas.width, canvas.height);
 if (gameOver) return;
 handleMovement();
 checkCollisions();
-
+checkMeteorCollisions({
+  player,
+  meteors,
+  shakeTimerRef: { value: shakeTimer },
+  updateHealthBar,
+  updatePlayerImage,
+  audio,
+  score,
+  levelRef,
+  setGameOverCallback: () => {
+    gameOver = true;
+    timerDisplay.classList.remove("pulsing");
+  }
+});
       drawPlayer();
       drawBullets();
-      drawMeteors();
+      drawMeteors(ctx, baseHp);
+updateScore(
+  levelRef,
+  level,
+  maxLevel,
+  { value: boss }, // boss as a reference
+  () => { gameOver = true; timerDisplay.classList.remove("pulsing"); }, // gameOverCallback
+  updateBackground,
+  { value: timePowerupsSpawned }, // timePowerupsSpawnedRef
+  timePowerup,
+  bossImage
+);
+level = levelRef.value;
       drawBoss();
-      applyGravityPull(canvas, player, level, updateHealthBar, updatePlayerImage, audio.playShieldDown, val => shakeTimer = val);
+      applyGravityPull(canvas, player, levelRef, updateHealthBar, updatePlayerImage, audio.playShieldDown, val => shakeTimer = val);
       drawEnemyBullets();
 requestAnimationFrame(gameLoop);
     }
@@ -457,7 +321,7 @@ function drawHealthBar() {
 }
 
     setInterval(() => {
-      if (gameStarted) spawnMeteor();
+      if (gameStarted) spawnMeteor(player.x, player.y, levelRef);
     }, 1000);
 
 const shootingEnemies = ["enemyGreen2.png", "enemyBlack3.png", "enemyBlack4.png"];
@@ -497,7 +361,17 @@ setInterval(() => {
   document.getElementById("startScreen").style.display = "none";
   gameStarted = true;
   updateBackground(level);
-  updateScore();
+  updateScore(
+  level,
+  maxLevel,
+  { value: boss }, // as a reference
+  () => { gameOver = true; timerDisplay.classList.remove("pulsing"); },
+  updateBackground,
+  { value: timePowerupsSpawned },
+  timePowerup,
+  bossImage
+);
+level = levelRef.value;
   startTimer();
   updateAmmoDisplay();
   gameLoop();
