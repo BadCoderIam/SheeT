@@ -6,34 +6,35 @@
   const centerY = canvas.height / 2;
 
   if (level === 3 || level === 6) {
-    const dx = centerX - (player.x + player.width / 2);
-    const dy = centerY - (player.y + player.height / 2);
-    const distance = Math.sqrt(dx * dx + dy * dy);
+  const dx = centerX - (player.x + player.width / 2);
+  const dy = centerY - (player.y + player.height / 2);
+  const distance = Math.sqrt(dx * dx + dy * dy);
 
-    // Gentle gravity
-    const gravityStrength = (level === 6) ? 0.00045 : 0.00025;
-    const dirX = dx / distance;
-    const dirY = dy / distance;
+  // Avoid divide-by-zero
+  if (distance === 0) return;
 
-    // Initialize velocity if not present
-    if (player.xVelocity === undefined) player.xVelocity = 0;
-    if (player.yVelocity === undefined) player.yVelocity = 0;
+  const gravityStrength = (level === 6) ? 0.2 : 0.1; // MUCH stronger
+  const dirX = dx / distance;
+  const dirY = dy / distance;
 
-    // Apply force
-    const pull = Math.min(gravityStrength * distance, 0.5);
-    player.xVelocity += dirX * pull;
-    player.yVelocity += dirY * pull;
+  if (player.xVelocity === undefined) player.xVelocity = 0;
+  if (player.yVelocity === undefined) player.yVelocity = 0;
 
-    // Damping and max speed
-    player.xVelocity *= 0.85;
-    player.yVelocity *= 0.85;
-    const maxSpeed = 2;
-    player.xVelocity = Math.max(-maxSpeed, Math.min(maxSpeed, player.xVelocity));
-    player.yVelocity = Math.max(-maxSpeed, Math.min(maxSpeed, player.yVelocity));
+  const pull = Math.min(gravityStrength * distance, 6); // allow much stronger pull
+  player.xVelocity += dirX * pull;
+  player.yVelocity += dirY * pull;
 
-    // Apply movement
-    player.x += player.xVelocity;
-    player.y += player.yVelocity;
+  // Optional: apply mild damping
+  player.xVelocity *= 0.99;
+  player.yVelocity *= 0.99;
+
+  // Cap speed to keep under control
+  const maxSpeed = 10;
+  player.xVelocity = Math.max(-maxSpeed, Math.min(maxSpeed, player.xVelocity));
+  player.yVelocity = Math.max(-maxSpeed, Math.min(maxSpeed, player.yVelocity));
+
+  player.x += player.xVelocity;
+  player.y += player.yVelocity;
 
     // === Burn zone logic ===
     const deathRadius = (level === 6) ? 160 : 140;
@@ -66,16 +67,29 @@
 
   // Level 4 rightward gravity
   if (level === 4) {
-  const gravityForce = 0.08;
+  const targetX = canvas.width; // pull toward right edge
+  const dx = targetX - (player.x + player.width / 2);
+  const distance = Math.abs(dx); // distance to the right
+
+  const gravityStrength = 2; // Base strength
+  const pull = Math.min(gravityStrength * distance, 6); // Cap pull strength
 
   if (player.xVelocity === undefined) player.xVelocity = 0;
 
-  // Apply rightward gravity
-  player.xVelocity += gravityForce;
-  player.xVelocity *= 0.95;
+  // Direction is always rightward, so no need to normalize
+  player.xVelocity += pull * 0.2; // scaled down for smoother motion
+
+  // Optional damping
+  player.xVelocity *= 0.99;
+
+  // Clamp max speed
+  const maxSpeed = 10;
+  player.xVelocity = Math.min(player.xVelocity, maxSpeed);
+
+  // Apply movement
   player.x += player.xVelocity;
 
-  // Clamp player inside canvas
+  // Clamp inside canvas
   if (player.x > canvas.width - player.width) {
     player.x = canvas.width - player.width;
     player.xVelocity = 0;

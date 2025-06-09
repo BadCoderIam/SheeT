@@ -1,5 +1,6 @@
 import * as audio from './audio.js';
 
+
 export const bullets = [];
 
 
@@ -26,14 +27,14 @@ export function setBulletImg(upgraded) {
     currentBulletImage = upgraded ? bulletImageGreen : bulletImageRed;
 }
 
-export function drawBullets() {
-      bullets.forEach((b, i) => {
-        b.y -= b.speed;
-        const img = upgraded ? upgradedBulletImg : bulletImg;
-        ctx.drawImage(currentBulletImage, b.x, b.y, b.width, b.height);
-        if (b.y < 0) bullets.splice(i, 1);
-      });
-    }
+export function drawBullets(ctx, upgraded) {
+  bullets.forEach((b, i) => {
+    b.y -= b.speed;
+    const img = upgraded ? upgradedBulletImg : bulletImg;
+    ctx.drawImage(currentBulletImage, b.x, b.y, b.width, b.height);
+    if (b.y < 0) bullets.splice(i, 1);
+  });
+}
 
     export function drawEnemyBullets() {
   for (let i = enemyBullets.length - 1; i >= 0; i--) {

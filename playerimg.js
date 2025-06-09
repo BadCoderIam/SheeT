@@ -1,5 +1,6 @@
 import { canvas } from './canvas.js';
 
+let shakeTimer = 0;
 export const playerImagesByHP = {
   20: new Image(),
   15: new Image(),
@@ -35,6 +36,29 @@ export function updatePlayerImage(player) {
   } else if (player.hp > 20) {
     playerImg = playerImagesByHP[20];
   }
+}
+
+export function updateHealthBar(player, maxHP) {
+  const maxBarWidth = 200; // or whatever width you want
+  const bar = document.getElementById('healthBar');
+  const container = document.getElementById('healthBarContainer');
+  const percent = Math.max(0, player.hp / maxHP);
+
+  const fillWidth = percent * (maxBarWidth - 10);
+  bar.style.width = fillWidth + "px";
+
+  const containerWidth = Math.max(percent * maxBarWidth, 50);
+  container.style.width = containerWidth + "px";
+
+  let barColor = "#00ff00";
+  if (percent <= 0.35) {
+    const strobe = Math.floor(Date.now() / 100) % 2 === 0;
+    barColor = strobe ? "#ff0000" : "#880000";
+  } else if (percent <= 0.7) {
+    barColor = "#ffa500";
+  }
+
+  bar.style.backgroundColor = barColor;
 }
 
 export let playerImg = playerImagesByHP[20];

@@ -1,14 +1,36 @@
+// Boss.js
 
-// boss.js
-export let boss = null;
-let BossImg = null;
+import { updateScore } from './UI.js';
+import { player } from './playerimg.js';
+import { enemyBullets } from './Bullets.js';
+import * as audio from './audio.js';
 
-export function setBossImageRef(ref) {
-  BossImg = ref;
+export const BossImagesByHP = {
+  300: new Image(),
+  200: new Image(),
+  100: new Image(),
+  50: new Image()
+};
+
+BossImagesByHP[300].src = "./sprites/enemyGreen5.png";
+BossImagesByHP[200].src = "./sprites/enemyblue5.png";
+BossImagesByHP[100].src = "./sprites/enemyRed5.png";
+BossImagesByHP[50].src = "./sprites/enemyblack5.png";
+
+export const bossImage = new Image();
+bossImage.src = "./Sprites/enemyBlack5.png";
+
+export let BossImg = BossImagesByHP[300];
+
+export function updateBossImage(bossHP) {
+  if (bossHP >= 300) BossImg = BossImagesByHP[300];
+  else if (bossHP >= 200) BossImg = BossImagesByHP[200];
+  else if (bossHP >= 100) BossImg = BossImagesByHP[100];
+  else if (bossHP > 0) BossImg = BossImagesByHP[50];
 }
 
-export function spawnBoss(canvas, bossImage) {
-  boss = {
+export function spawnBoss(canvas) {
+  return {
     x: canvas.width / 2 - 100,
     y: 50,
     width: 200,
@@ -20,21 +42,17 @@ export function spawnBoss(canvas, bossImage) {
   };
 }
 
-export function getBoss() {
-  return boss;
-}
+export function drawBoss(ctx, boss, levelRef, maxLevel, updateBackground, timePowerupsSpawned, timePowerup, canvas, explosionImg, bullets, setGameOver) {
+  if (!boss) return;
 
-export function drawBoss({ ctx, canvas, bullets, enemyBullets, player, explosionImg, playLaser, playExplosion, updateScore, updateBossImage, score, setGameOver }) {
-  if (!boss) return score;
-
-  // Move boss side-to-side
+  // Move boss
   boss.x += boss.dx;
   if (boss.x < 0 || boss.x + boss.width > canvas.width) boss.dx *= -1;
 
   updateBossImage(boss.hp);
   ctx.drawImage(BossImg, boss.x, boss.y, boss.width, boss.height);
 
-  // === Boss Health Bar ===
+  // Draw HP bar
   const barWidth = boss.width;
   const barHeight = 10;
   const barX = boss.x;
@@ -54,8 +72,8 @@ export function drawBoss({ ctx, canvas, bullets, enemyBullets, player, explosion
   ctx.strokeStyle = "#fff";
   ctx.strokeRect(barX, barY, barWidth, barHeight);
 
-  // Fire bullets at player every 1s
-  if (Date.now() - boss.lastShotTime > 1000) {
+  // Fire bullets every 1s
+  if (Date.now() - boss.lastShotTime > 1000 && player && player.width && player.height) {
     const dx = (player.x + player.width / 2) - (boss.x + boss.width / 2);
     const dy = (player.y + player.height / 2) - (boss.y + boss.height);
     const mag = Math.sqrt(dx * dx + dy * dy);
@@ -71,11 +89,11 @@ export function drawBoss({ ctx, canvas, bullets, enemyBullets, player, explosion
       vx, vy
     });
 
-    playLaser();
+    audio.playLaser();
     boss.lastShotTime = Date.now();
   }
 
-  // Bullet collision with boss
+  // Check bullet collisions
   for (let i = bullets.length - 1; i >= 0; i--) {
     const b = bullets[i];
     if (
@@ -86,17 +104,28 @@ export function drawBoss({ ctx, canvas, bullets, enemyBullets, player, explosion
     ) {
       bullets.splice(i, 1);
       boss.hp -= 1;
-      score += 1;
-      updateScore();
+
+      updateScore(
+        levelRef,
+        levelRef.value,
+        maxLevel,
+        { value: boss },
+        setGameOver,
+        updateBackground,
+        { value: timePowerupsSpawned },
+        timePowerup,
+        canvas,
+        bossImage
+      );
+
       ctx.drawImage(explosionImg, b.x, b.y, 30, 30);
-      playExplosion();
+      audio.playExplosion();
 
       if (boss.hp <= 0) {
-        boss = null;
-        setGameOver();
+        return null; // signal boss defeat
       }
     }
   }
 
-  return score;
+  return boss;
 }

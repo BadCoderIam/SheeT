@@ -2,15 +2,37 @@
 
 import { applyGravityPull } from './gravity.js';
 import { updateBackground } from './levels.js';
+import { updateScore } from './UI.js';
+import { baseHp } from './state.js';
 import { playerImg, playerImagesByHP, updatePlayerImage, player } from './playerimg.js';
 import * as audio from './audio.js';
-import { bullets, bulletImg, upgradedBulletImg, enemyBullets, enemyBulletImg, bulletImageRed, bulletImageGreen, currentBulletImage, setBulletImg } from './Bullets.js';
+import { drawBullets, bullets, bulletImg, upgradedBulletImg, enemyBullets, enemyBulletImg, bulletImageRed, bulletImageGreen, currentBulletImage, setBulletImg } from './Bullets.js';
+import {
+  meteors,
+  setMeteorState,
+  spawnMeteor,
+  drawMeteors,
+  spawnFragments,
+  updateMeteorAttacks, 
+  checkMeteorCollisions, getScore, getHighScore, setMeteorLevelRef
+} from './meteors.js';
+import {
+  BossImagesByHP,
+  bossImage,
+  BossImg,
+  updateBossImage,
+  spawnBoss,
+  drawBoss
+} from './Boss.js';
 
 
 (function () {
 
-
-
+let bossWarningActive = false;
+let bossWarningStartTime = 0;
+let bossSpawnDelayed = false;
+let bossWarningOpacity = 0;
+let shakeUntil = 0;
 
 const BossImagesByHP = {
   300: new Image(),
@@ -19,6 +41,8 @@ const BossImagesByHP = {
   50: new Image()
 };
 
+const explosionImg = new Image();
+explosionImg.src = "./Sprites/Blank.png";
 
 BossImagesByHP[300].src = "./sprites/enemyGreen5.png";     // Full HP
 BossImagesByHP[200].src = "./sprites/enemyblue5.png";     // Slight damage
@@ -35,6 +59,8 @@ const bossImage = new Image();
 bossImage.src = "./Sprites/enemyBlack5.png";
     
 let gameStarted = false;
+let level = 1;
+let levelRef = { value: level };
 let gameOver = false;
 let meteorHP = 2;
 let ammo = 500;
@@ -48,105 +74,12 @@ let timePowerupsSpawned = 0;
 let maxTimePowerupsPerLevel = 2; // Change as needed
 let flashRed = false;
 let flashTimer = 0;
-    let level = 1;
+
     const maxLevel = 6;
     let highScore = localStorage.getItem('highScore') || 0;
     let BossImg = BossImagesByHP[300];
 
-    
-const fragmentImg = new Image();
-fragmentImg.src = "./Sprites/meteorGrey_tiny1.png";
-const brownFragmentImg = new Image();
-brownFragmentImg.src = "./Sprites/meteorBrown_tiny1.png";
-    const explosionImg = new Image();
-    explosionImg.src = "./Sprites/Blank.png";
 
-const rogueMeteorImage = new Image();
-rogueMeteorImage.src = "./Sprites/METEORITE-ELEMENTONLY-s.gif";
-
-const meteorImagesByLevel = {
-  1: ["./Sprites/meteorBrown_small2.png", "./Sprites/meteorBrown_big2.png"],
-  2: ["./Sprites/meteorGrey_med2.png", "./sprites/meteorGrey_small2.png", "./Sprites/meteorGrey_big1.png"],
-  3: ["./Sprites/meteorBrown_med3.png", "./Sprites/meteorBrown_big2.png"],
-  4: ["./Sprites/enemyGreen2.png", "./Sprites/enemyBlack3.png"],
-  5: ["./Sprites/METEORITE-ELEMENTONLY-s.gif", "./Sprites/enemyBlack4.png"],
-  6: ["./Sprites/METEORITE-ELEMENTONLY-s.gif"] 
-};
-const meteorHPByImage = {
-  "./Sprites/meteorBrown_small2.png": 2,
-  "./Sprites/meteorGrey_small2.png": 3,
-  "./Sprites/meteorGrey_med2.png": 3,
-  "./Sprites/meteorGrey_big1.png": 4,
-  "./Sprites/meteorGrey_tiny1.png": 1,
-  "./Sprites/meteorBrown_tiny1.png": 1,
-  "./Sprites/meteorBrown_med3.png": 4,
-  "./Sprites/meteorBrown_big2.png": 4,
-  "./Sprites/enemyGreen2.png": 4,
-  "./Sprites/enemyBlack3.png": 4,
-  "./Sprites/enemyBlack4.png": 4,
-  "./Sprites/METEORITE-ELEMENTONLY-s.gif": 6
-};
-
-
-    const meteors = [];
-
-
-
-    function spawnMeteor(playerX = canvas.width / 2, playerY = canvas.height / 2) {
-  const availableImages = meteorImagesByLevel[level];
-  const imgSrc = availableImages[Math.floor(Math.random() * availableImages.length)];
-  const img = new Image();
-  img.src = imgSrc;
-
-  let size = Math.random() * 40 + 30;
-  const baseHp = meteorHPByImage[imgSrc] || 1;
-  let hp = baseHp + (level - 1);
-
-  let x = Math.random() * (canvas.width - size);
-  let y = -size;
-  let vx = 0;
-  let vy = Math.random() * 3 + 1;
-
-  const isRogueMeteor = (level >= 3 && level <= 6) && Math.random() < 0.1;
-
-  if (isRogueMeteor) {
-    size *= 1.5;
-    hp *= 1;
-    img.src = rogueMeteorImage.src;
-
-    // Spawn from a random corner
-    const corner = Math.floor(Math.random() * 4);
-    switch (corner) {
-      case 0: x = 0; y = 0; break;
-      case 1: x = canvas.width - size; y = 0; break;
-      case 2: x = 0; y = canvas.height - size; break;
-      case 3: x = canvas.width - size; y = canvas.height - size; break;
-    }
-
-    // Always move diagonally from the corner
-    const diagSpeed = 2.5;
-    switch (corner) {
-      case 0: vx = diagSpeed; vy = diagSpeed; break;         // Top-left
-      case 1: vx = -diagSpeed; vy = diagSpeed; break;        // Top-right
-      case 2: vx = diagSpeed; vy = -diagSpeed; break;        // Bottom-left
-      case 3: vx = -diagSpeed; vy = -diagSpeed; break;       // Bottom-right
-    }
-  }
-
-  meteors.push({
-    x: x,
-    y: y,
-    width: size,
-    height: size,
-    speed: vy, // fallback for old logic
-    vx: vx || 0,
-    vy: vy || 0,
-    hp: hp,
-    img: img,
-    lastShotTime: Date.now(),
-    isRogue: isRogueMeteor
-  });
-}
 
     
 document.addEventListener('keydown', e => {
@@ -168,51 +101,8 @@ document.addEventListener('keydown', e => {
 });
     
 
-function updateScore() {
-  if (score >= level * 100 && level < maxLevel) {
-    level++;
-    timePowerupsSpawned = 0;
-    timePowerup.spawnTime = Date.now() + 10000 + Math.random() * 5000;
-    updateBackground(level);
 
-    // Spawn boss on level 6
-    if (level === 6) {
-      boss = {
-        x: canvas.width / 2 - 100,
-        y: 50,
-        width: 200,
-        height: 200,
-        hp: 300,
-        dx: 2,
-        img: bossImage,
-        lastShotTime: Date.now()
-      };
-    }
-  }
-
-
-  // Do NOT trigger gameOver here unless score caps out and no boss is expected
-  if (score >= 2000 && !boss) {
-    gameOver = true;
-    document.getElementById("startScreen").style.display = "flex";
-    document.getElementById("startScreen").innerHTML = `<h1>You WON! Good Jeb SheeTy!</h1><p>Score: ${score}</p><p>High Score: ${highScore}</p><p>Level: ${level}</p><button onclick="location.reload()">Restart</button>`;
-  }
-
-  document.getElementById("scoreDisplay").innerText = `Score: ${score} | High Score: ${highScore} | Level: ${level}`;
-}
-
-    function drawPlayer() {
-      ctx.drawImage(playerImg, player.x, player.y, player.width, player.height);
-    }
-
-    function drawBullets() {
-      bullets.forEach((b, i) => {
-        b.y -= b.speed;
-        const img = upgraded ? upgradedBulletImg : bulletImg;
-        ctx.drawImage(currentBulletImage, b.x, b.y, b.width, b.height);
-        if (b.y < 0) bullets.splice(i, 1);
-      });
-    }
+  
 function checkUpgradeTimeout() {
   if (upgraded && Date.now() > upgradeEndTime) {
     upgraded = false;
@@ -220,187 +110,7 @@ function checkUpgradeTimeout() {
   }
 }
     
-function spawnFragments(x, y, fragmentImage) {
-  for (let i = 0; i < 3; i++) {
-    const angle = Math.random() * 2 * Math.PI;
-    const speed = Math.random() * 2 + 1;
-    meteors.push({
-      x: x,
-      y: y,
-      width: 25,
-      height: 25,
-      speed: speed,
-      vx: Math.cos(angle) * speed,
-      vy: Math.sin(angle) * speed,
-      hp: 1,
-      img: fragmentImage,
-      isFragment: true
-    });
-  }
-}
 
-function drawMeteors() {
-  for (let mi = meteors.length - 1; mi >= 0; mi--) {
-    const m = meteors[mi];
-
-    // Update position
-    m.x += m.vx || 0;
-    m.y += m.vy || m.speed || 0;
-
-    // Remove if off-screen
-    if (
-      m.x + m.width < 0 || m.x > canvas.width || 
-      m.y + m.height < 0 || m.y > canvas.height
-    ) {
-      meteors.splice(mi, 1);
-      continue;
-    }
-
-    // Draw meteor
-    ctx.drawImage(m.img, m.x, m.y, m.width, m.height);
-
-    // Bullet collision
-    for (let bi = bullets.length - 1; bi >= 0; bi--) {
-      const b = bullets[bi];
-      if (
-        b.x < m.x + m.width &&
-        b.x + b.width > m.x &&
-        b.y < m.y + m.height &&
-        b.y + b.height > m.y
-      ) {
-        m.hp--;
-        bullets.splice(bi, 1);
-        ctx.drawImage(explosionImg, m.x, m.y, m.width, m.height);
-        audio.playExplosion();
-
-        if (m.hp <= 0) {
-          let meteorPoints = 0;
-
-          // 🎯 Score logic for rogues
-          if (m.isRogue) {
-            meteorPoints = 50;
-          } else if (m.hp > 3) {
-            meteorPoints = 30;
-          } else if (m.hp > 2) {
-            meteorPoints = 15;
-          } else {
-            meteorPoints = 5;
-          }
-
-          // 🔄 Fragment logic only for regular meteors
-          if (!m.isRogue) {
-            if (m.img.src.includes("meteorGrey_big1.png")) {
-              spawnFragments(m.x, m.y, fragmentImg);
-            } else if (m.img.src.includes("meteorBrown_big2.png")) {
-              spawnFragments(m.x, m.y, brownFragmentImg);
-            }
-          }
-
-          meteors.splice(mi, 1);
-          score += meteorPoints;
-          updateScore();
-        }
-
-        if (score > highScore) {
-          highScore = score;
-          localStorage.setItem('highScore', highScore);
-        }
-
-        break;
-      }
-    }
-
-    // Cleanup fallback
-    if (m.y > canvas.height) {
-      meteors.splice(mi, 1);
-    }
-  }
-}
-
-function drawBoss() {
-  if (!boss) return;
-
-  // Move boss side-to-side
-  boss.x += boss.dx;
-  if (boss.x < 0 || boss.x + boss.width > canvas.width) boss.dx *= -1;
-
-if (boss) {
-  updateBossImage(boss.hp);
-  ctx.drawImage(BossImg, boss.x, boss.y, boss.width, boss.height);
-  // === Boss Health Bar ===
-const barWidth = boss.width;
-const barHeight = 10;
-const barX = boss.x;
-const barY = boss.y - 15; // position above boss
-const healthPercent = boss.hp / 300;
-
-// Background
-ctx.fillStyle = "#222";
-ctx.fillRect(barX, barY, barWidth, barHeight);
-
-// Fill
-let barColor = "#00ff00";
-if (boss.hp <= 100) {
-  barColor = "#ff0000"; // red if critical
-} else if (boss.hp <= 200) {
-  barColor = "#ffa500"; // orange for mid HP
-}
-
-ctx.fillStyle = barColor;
-ctx.fillRect(barX, barY, barWidth * healthPercent, barHeight);
-
-// Border
-ctx.strokeStyle = "#fff";
-ctx.strokeRect(barX, barY, barWidth, barHeight);
-}
-
-  // Fire bullets at the player every 1s
-  if (Date.now() - boss.lastShotTime > 1000) {
-    const dx = (player.x + player.width / 2) - (boss.x + boss.width / 2);
-    const dy = (player.y + player.height / 2) - (boss.y + boss.height);
-    const mag = Math.sqrt(dx * dx + dy * dy);
-    const speed = 4;
-    const vx = (dx / mag) * speed;
-    const vy = (dy / mag) * speed;
-
-    enemyBullets.push({
-      x: boss.x + boss.width / 2 - 5,
-      y: boss.y + boss.height,
-      width: 10,
-      height: 20,
-      vx, vy
-    });
-
-    audio.playLaser();
-    boss.lastShotTime = Date.now();
-  }
-
-  // Bullet collision with boss
-  for (let i = bullets.length - 1; i >= 0; i--) {
-    const b = bullets[i];
-    if (
-      b.x < boss.x + boss.width &&
-      b.x + b.width > boss.x &&
-      b.y < boss.y + boss.height &&
-      b.y + b.height > boss.y
-    ) {
-      bullets.splice(i, 1);
-      boss.hp -= 1;
-      score += 1;
-      updateScore();
-      ctx.drawImage(explosionImg, b.x, b.y, 30, 30);
-      audio.playExplosion();
-
-      if (boss.hp <= 0) {
-        boss = null;
-        gameOver = true;
-        document.getElementById("startScreen").style.display = "flex";
-        document.getElementById("startScreen").innerHTML =
-          `<h1>You Defeated the SheeTy Boss! Good Jeb SheeTy!</h1><p>Score: ${score}</p><p>High Score: ${highScore}</p><button onclick="location.reload()">Restart</button>`;
-      }
-    }
-  }
-}
     function gameLoop() {
       
       
@@ -408,12 +118,68 @@ ctx.clearRect(0, 0, canvas.width, canvas.height);
 if (gameOver) return;
 handleMovement();
 checkCollisions();
-
+checkMeteorCollisions({
+  player,
+  meteors,
+  shakeTimerRef: { value: shakeTimer },
+  updateHealthBar,
+  updatePlayerImage,
+  audio,
+  score,
+  levelRef,
+  setGameOverCallback: () => {
+    gameOver = true;
+    timerDisplay.classList.remove("pulsing");
+  }
+});
       drawPlayer();
-      drawBullets();
-      drawMeteors();
-      drawBoss();
-      applyGravityPull(canvas, player, level, updateHealthBar, updatePlayerImage, audio.playShieldDown, val => shakeTimer = val);
+      drawBullets(ctx, upgraded, currentBulletImage);
+      drawMeteors(ctx, baseHp);
+      if (level === 6 && !boss) {
+  boss = {
+    x: canvas.width / 2 - 100,
+    y: 50,
+    width: 200,
+    height: 200,
+    hp: 300,
+    dx: 2,
+    img: bossImage,
+    lastShotTime: Date.now()
+  };
+}
+updateScore(
+  levelRef,
+  level,
+  maxLevel,
+  { value: boss }, // boss as a reference
+  () => { gameOver = true; timerDisplay.classList.remove("pulsing"); }, // gameOverCallback
+  updateBackground,
+  { value: timePowerupsSpawned }, // timePowerupsSpawnedRef
+  timePowerup,
+  canvas,
+  bossImage
+);
+level = levelRef.value;
+      boss = drawBoss(
+  ctx,
+  boss,
+  levelRef,
+  maxLevel,
+  updateBackground,
+  timePowerupsSpawned,
+  timePowerup,
+  canvas,
+  explosionImg,
+  bullets,
+  () => {
+    gameOver = true;
+    timerDisplay.classList.remove("pulsing");
+    document.getElementById("startScreen").style.display = "flex";
+    document.getElementById("startScreen").innerHTML =
+      `<h1>You Defeated the SheeTy Boss! Good Jeb SheeTy!</h1><p>Score: ${score}</p><p>High Score: ${highScore}</p><button onclick=\"location.reload()\">Restart</button>`;
+  }
+);
+      applyGravityPull(canvas, player, levelRef, updateHealthBar, updatePlayerImage, audio.playShieldDown, val => shakeTimer = val);
       drawEnemyBullets();
 requestAnimationFrame(gameLoop);
     }
@@ -457,7 +223,7 @@ function drawHealthBar() {
 }
 
     setInterval(() => {
-      if (gameStarted) spawnMeteor();
+      if (gameStarted) spawnMeteor(player.x, player.y, levelRef);
     }, 1000);
 
 const shootingEnemies = ["enemyGreen2.png", "enemyBlack3.png", "enemyBlack4.png"];
@@ -497,7 +263,18 @@ setInterval(() => {
   document.getElementById("startScreen").style.display = "none";
   gameStarted = true;
   updateBackground(level);
-  updateScore();
+  updateScore(
+  level,
+  maxLevel,
+  { value: boss }, // as a reference
+  () => { gameOver = true; timerDisplay.classList.remove("pulsing"); },
+  updateBackground,
+  { value: timePowerupsSpawned },
+  timePowerup,
+  canvas,
+  bossImage
+);
+level = levelRef.value;
   startTimer();
   updateAmmoDisplay();
   gameLoop();
@@ -575,13 +352,6 @@ function updateHealthBar() {
   }
 
   bar.style.backgroundColor = barColor;
-}
-
-function updateBossImage(bossHP) {
-  if (bossHP >= 300) BossImg = BossImagesByHP[300];
-  else if (bossHP >= 200) BossImg = BossImagesByHP[200];
-  else if (bossHP >= 100) BossImg = BossImagesByHP[100];
-  else if (bossHP > 0) BossImg = BossImagesByHP[50];
 }
 
 function checkCollisions() {
