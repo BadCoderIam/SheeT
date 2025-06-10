@@ -26,7 +26,7 @@ export function initPowerups(canvasWidth, hudState) {
   timePowerup.x = Math.random() * (canvasWidth - timePowerup.width);
 }
 
-export function drawPowerup(ctx, canvas, player, ammoState, updateAmmoDisplay) {
+export function drawPowerup(ctx, canvas, player, updateAmmoDisplay, ammo, maxAmmo) {
   const now = Date.now();
 
   if (now > powerup.spawnTime && !powerup.active) {
@@ -49,8 +49,7 @@ export function drawPowerup(ctx, canvas, player, ammoState, updateAmmoDisplay) {
       upgraded = true;
       upgradeEndTime = now + 10000;
 
-      ammoState.ammo = Math.min(ammoState.ammo + 200, ammoState.maxAmmo);
-      updateAmmoDisplay();
+      ammo = Math.min(ammo + 200, maxAmmo);
       setBulletImg(true);
       audio.playShieldUp();
 

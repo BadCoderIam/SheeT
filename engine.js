@@ -82,7 +82,12 @@ let flashTimer = 0;
     let highScore = localStorage.getItem('highScore') || 0;
     let BossImg = BossImagesByHP[300];
 
+function updateAmmoDisplay() {
+  document.getElementById('ammoDisplay').innerText = `🔫 Ammo: ${ammo}`;
+}
 
+const maxHP = 20;
+const maxBarWidth = 300;
 
     
 document.addEventListener('keydown', e => {
@@ -103,7 +108,6 @@ document.addEventListener('keydown', e => {
   }
 });
     
-
 
   
 function checkUpgradeTimeout() {
@@ -138,7 +142,7 @@ checkMeteorCollisions({
       drawPlayer();
       updatePowerupState(Date.now());
       drawBullets(ctx, upgraded, currentBulletImage);
-      drawPowerup(ctx, canvas, player, ammoState, updateAmmoDisplay);
+      drawPowerup(ctx, canvas, player, ammoState, updateAmmoDisplay, ammo);
       drawTimePowerup(ctx, canvas, player, updateHealthBar, updatePlayerImage, hudState);
       drawMeteors(ctx, baseHp);
       if (level === 6 && !boss) {
@@ -328,12 +332,6 @@ function handleMovement() {
   if (player.y + player.height > canvas.height) player.y = canvas.height - player.height;
 }
 
-function updateAmmoDisplay() {
-  document.getElementById('ammoDisplay').innerText = `🔫 Ammo: ${ammo}`;
-}
-
-const maxHP = 20;
-const maxBarWidth = 300;
 
 function updateHealthBar() {
   const bar = document.getElementById('healthBar');
