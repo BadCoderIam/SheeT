@@ -36,7 +36,7 @@ export function drawBullets(ctx, upgraded) {
   });
 }
 
-    export function drawEnemyBullets() {
+    export function drawEnemyBullets(ctx, player, canvas, shakeTimer, updateHealthBar, updatePlayerImage, gameOver, score, highScore, level) {
   for (let i = enemyBullets.length - 1; i >= 0; i--) {
     const b = enemyBullets[i];
     b.x += b.vx;

@@ -6,7 +6,7 @@ import { updateScore } from './UI.js';
 import { baseHp } from './state.js';
 import { playerImg, playerImagesByHP, updatePlayerImage, player } from './playerimg.js';
 import * as audio from './audio.js';
-import { drawBullets, bullets, bulletImg, upgradedBulletImg, enemyBullets, enemyBulletImg, bulletImageRed, bulletImageGreen, currentBulletImage, setBulletImg } from './Bullets.js';
+import { drawBullets, drawEnemyBullets, bullets, bulletImg, upgradedBulletImg, enemyBullets, enemyBulletImg, bulletImageRed, bulletImageGreen, currentBulletImage, setBulletImg } from './Bullets.js';
 import {
   meteors,
   setMeteorState,
@@ -24,6 +24,7 @@ import {
   spawnBoss,
   drawBoss
 } from './Boss.js';
+import { drawPowerup, drawTimePowerup, upgraded, upgradeEndTime, initPowerups, timePowerup, updatePowerupState } from './powerups.js';
 
 
 (function () {
@@ -65,13 +66,15 @@ let gameOver = false;
 let meteorHP = 2;
 let ammo = 500;
 const maxAmmo = 500;
+const ammoState = { ammo, maxAmmo };
 let keys = {};
 let shakeTimer = 0;
 let score = 0;
 let timeLeft = 100; // in seconds
 let timerInterval = null;
 let timePowerupsSpawned = 0;
-let maxTimePowerupsPerLevel = 2; // Change as needed
+let maxTimePowerupsPerLevel = 2;
+const hudState = { timeLeft, timePowerupsSpawned, maxTimePowerupsPerLevel }; // Change as needed
 let flashRed = false;
 let flashTimer = 0;
 
@@ -133,7 +136,10 @@ checkMeteorCollisions({
   }
 });
       drawPlayer();
+      updatePowerupState(Date.now());
       drawBullets(ctx, upgraded, currentBulletImage);
+      drawPowerup(ctx, canvas, player, ammoState, updateAmmoDisplay);
+      drawTimePowerup(ctx, canvas, player, updateHealthBar, updatePlayerImage, hudState);
       drawMeteors(ctx, baseHp);
       if (level === 6 && !boss) {
   boss = {
@@ -179,8 +185,8 @@ level = levelRef.value;
       `<h1>You Defeated the SheeTy Boss! Good Jeb SheeTy!</h1><p>Score: ${score}</p><p>High Score: ${highScore}</p><button onclick=\"location.reload()\">Restart</button>`;
   }
 );
-      applyGravityPull(canvas, player, levelRef, updateHealthBar, updatePlayerImage, audio.playShieldDown, val => shakeTimer = val);
-      drawEnemyBullets();
+      applyGravityPull(canvas, player, levelRef.value, updateHealthBar, updatePlayerImage, audio.playShieldDown, val => shakeTimer = val);
+      drawEnemyBullets(ctx, player, canvas, shakeTimer, updateHealthBar, updatePlayerImage, audio.playShieldDown, gameOver, score, highScore, level);
 requestAnimationFrame(gameLoop);
     }
 function drawHealthBar() {
@@ -332,6 +338,7 @@ const maxBarWidth = 300;
 function updateHealthBar() {
   const bar = document.getElementById('healthBar');
   const container = document.getElementById('healthBarContainer');
+     container.style.display = "flex";
   const percent = Math.max(0, player.hp / maxHP);
 
   // Update fill bar
@@ -390,6 +397,7 @@ function drawPlayer() {
 
   // Draw the player ship
   ctx.drawImage(playerImg, drawX, drawY, player.width, player.height);
+  updateHealthBar();
 
     // === Layout constants ===
   const iconSize = 16;
@@ -461,190 +469,19 @@ function startGame() {
         score = 0;
         level = 0;
         gameOver = false;
-        drawPowerup();
-        drawTimePowerup();
+        player.hp = 20;
+        initPowerups(canvas.width, hudState);
+        hudState.timePowerupsSpawned = 0;
+        document.getElementById('healthBarContainer').style.display = "flex";
+updateHealthBar();
         updateHealthBar();
         updateAmmoDisplay();
-        applyGravityPull(canvas, player, level, updateHealthBar, updatePlayerImage, audio.playShieldDown, val => shakeTimer = val);
+        applyGravityPull(canvas, player, levelRef.value, updateHealthBar, updatePlayerImage, audio.playShieldDown, val => shakeTimer = val);
         checkUpgradeTimeout();
         requestAnimationFrame(gameLoop);
     } else {
         console.warn('gameLoop() function not found.');
     }
-}
-let originalGameLoop = gameLoop;
-gameLoop = function () {
-    originalGameLoop();
-    drawPowerup();
-    drawTimePowerup();
-    updateHealthBar();
-    applyGravityPull(canvas, player, level, updateHealthBar, updatePlayerImage, audio.playShieldDown, val => shakeTimer = val);
-    updateAmmoDisplay();
-    checkUpgradeTimeout();
-};
-
-// === Powerup and Bullet Upgrade Logic ===
-let timePowerup = {
-  x: Math.random() * canvas.width,
-  y: -50,
-  width: 32,
-  height: 32,
-  image: new Image(),
-  active: false,
-  spawnTime: Date.now() + 20000 + Math.random() * 15000 
-};
-timePowerup.image.src = "./sprites/powerupGreen_star.png";
-
-let powerup = {
-    x: Math.random() * canvas.width,
-    y: -50,
-    width: 32,
-    height: 32,
-    image: new Image(),
-    active: false,
-    spawnTime: Date.now() + 10000 + Math.random() * 10000
-};
-powerup.image.src = "./sprites/powerupBlue_bolt.png";
-
-let upgraded = false;
-let upgradeEndTime = 0;
-
-// Spawn and draw powerup
-function drawPowerup() {
-  const now = Date.now();
-
-  // Spawn if time passed and not active
-  if (now > powerup.spawnTime && !powerup.active) {
-    powerup.x = Math.random() * (canvas.width - powerup.width);
-    powerup.y = -50;
-    powerup.active = true;
-  }
-
-  if (powerup.active) {
-    powerup.y += 2;
-    ctx.drawImage(powerup.image, powerup.x, powerup.y, powerup.width, powerup.height);
-
-    // Collision with player
-    if (
-      player.x < powerup.x + powerup.width &&
-      player.x + player.width > powerup.x &&
-      player.y < powerup.y + powerup.height &&
-      player.y + player.height > powerup.y
-    ) {
-      powerup.active = false;
-
-      // Apply powerup effect
-      upgraded = true;
-      upgradeEndTime = Date.now() + 10000;
-      ammo = Math.min(ammo + 200, maxAmmo);
-      updateAmmoDisplay();
-      setBulletImg(true);
-      audio.playShieldUp();
-
-      // 🔁 Set next spawn time (15–25 seconds later)
-      powerup.spawnTime = now + 15000 + Math.random() * 10000;
-    }
-
-    // Despawn if off screen
-    if (powerup.y > canvas.height) {
-      powerup.active = false;
-
-      // 🔁 Set next spawn time (if missed)
-      powerup.spawnTime = now + 15000 + Math.random() * 10000;
-    }
-  }
-}
-
-function drawTimePowerup() {
-  const now = Date.now();
-
-  // Only spawn if:
-  // - Time to spawn has passed
-  // - Powerup isn't active
-  // - Fewer than the max allowed have spawned this level
-  if (
-    now > timePowerup.spawnTime &&
-    !timePowerup.active &&
-    timePowerupsSpawned < maxTimePowerupsPerLevel
-  ) {
-    timePowerup.x = Math.random() * (canvas.width - timePowerup.width);
-    timePowerup.y = -50;
-    timePowerup.active = true;
-    timePowerupsSpawned++;
-  }
-
-  if (timePowerup.active) {
-    timePowerup.y += 4;
-    ctx.drawImage(timePowerup.image, timePowerup.x, timePowerup.y, timePowerup.width, timePowerup.height);
-
-    // Collision with player
-    if (
-      player.x < timePowerup.x + timePowerup.width &&
-      player.x + player.width > timePowerup.x &&
-      player.y < timePowerup.y + timePowerup.height &&
-      player.y + player.height > timePowerup.y
-    ) {
-      timePowerup.active = false;
-      timeLeft += 25;
-      if (timeLeft > 999) timeLeft = 999;
-
-      player.hp = Math.min(player.hp + 4, 20);
-       updateHealthBar();      // Updates HUD
-       updatePlayerImage(player); 
-
-      const timerDisplay = document.getElementById("timerText");
-      timerDisplay.innerText = `Time: ${timeLeft}`;
-      timerDisplay.classList.add("flash");
-      setTimeout(() => timerDisplay.classList.remove("flash"), 3000);
-
-      audio.playShieldUp();
-
-      // Set a new delayed spawn time (no back-to-back spawn)
-      timePowerup.spawnTime = now + 15000 + Math.random() * 10000; // 15–25 sec delay
-    }
-
-    // Despawn if off screen
-    if (timePowerup.y > canvas.height) {
-      timePowerup.active = false;
-      // Set delayed spawn time even if missed
-      timePowerup.spawnTime = now + 15000 + Math.random() * 10000;
-    }
-  }
-}
-
-
-function drawEnemyBullets() {
-  for (let i = enemyBullets.length - 1; i >= 0; i--) {
-    const b = enemyBullets[i];
-    b.x += b.vx;
-    b.y += b.vy;
-    ctx.drawImage(enemyBulletImg, b.x, b.y, b.width, b.height);
-
-    // Check collision with player
-    if (
-      b.x < player.x + player.width &&
-      b.x + b.width > player.x &&
-      b.y < player.y + player.height &&
-      b.y + b.height > player.y
-    ) {
-      enemyBullets.splice(i, 1);
-      player.hp--;
-      shakeTimer = 120;
-      updatePlayerImage(player);
-      audio.playShieldDown();
-
-      if (player.hp <= 0) {
-        gameOver = true;
-        timerDisplay.classList.remove("pulsing");
-        document.getElementById("startScreen").style.display = "flex";
-        document.getElementById("startScreen").innerHTML = `<h1>Game Over! You Died SheeTy!!</h1><p>Score: ${score}</p><p>High Score: ${highScore}</p><p>Level: ${level}</p><button onclick="location.reload()">Restart</button>`;
-      }
-    }
-
-    if (b.y > canvas.height) {
-      enemyBullets.splice(i, 1);
-    }
-  }
 }
 
 

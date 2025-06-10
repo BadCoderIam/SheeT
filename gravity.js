@@ -1,5 +1,6 @@
    import { playerImg, playerImagesByHP, updatePlayerImage, player } from './playerimg.js';
    import * as audio from './audio.js';
+
    
    export function applyGravityPull(canvas, player, level, updateHealthBar, updatePlayerImage, playShieldDown, shakeTimerSetter) {
   const centerX = canvas.width / 2;
@@ -13,23 +14,23 @@
   // Avoid divide-by-zero
   if (distance === 0) return;
 
-  const gravityStrength = (level === 6) ? 0.2 : 0.1; // MUCH stronger
+  const gravityStrength = (level === 6) ? 0.00045 : 0.00025; // MUCH stronger
   const dirX = dx / distance;
   const dirY = dy / distance;
 
   if (player.xVelocity === undefined) player.xVelocity = 0;
   if (player.yVelocity === undefined) player.yVelocity = 0;
 
-  const pull = Math.min(gravityStrength * distance, 6); // allow much stronger pull
+  const pull = Math.min(gravityStrength * distance, 0.5); // allow much stronger pull
   player.xVelocity += dirX * pull;
   player.yVelocity += dirY * pull;
 
   // Optional: apply mild damping
-  player.xVelocity *= 0.99;
-  player.yVelocity *= 0.99;
+  player.xVelocity *= 0.9;
+  player.yVelocity *= 0.9;
 
   // Cap speed to keep under control
-  const maxSpeed = 10;
+  const maxSpeed = 3;
   player.xVelocity = Math.max(-maxSpeed, Math.min(maxSpeed, player.xVelocity));
   player.yVelocity = Math.max(-maxSpeed, Math.min(maxSpeed, player.yVelocity));
 
@@ -71,19 +72,19 @@
   const dx = targetX - (player.x + player.width / 2);
   const distance = Math.abs(dx); // distance to the right
 
-  const gravityStrength = 2; // Base strength
-  const pull = Math.min(gravityStrength * distance, 6); // Cap pull strength
+  const gravityStrength = .06; // Base strength
+  const pull = Math.min(gravityStrength * distance, 1.5); // Cap pull strength
 
   if (player.xVelocity === undefined) player.xVelocity = 0;
 
   // Direction is always rightward, so no need to normalize
-  player.xVelocity += pull * 0.2; // scaled down for smoother motion
+  player.xVelocity += pull * 0.02; // scaled down for smoother motion
 
   // Optional damping
   player.xVelocity *= 0.99;
 
   // Clamp max speed
-  const maxSpeed = 10;
+  const maxSpeed = 7;
   player.xVelocity = Math.min(player.xVelocity, maxSpeed);
 
   // Apply movement

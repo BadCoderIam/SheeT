@@ -1,50 +1,34 @@
-export let timePowerupsSpawned = 0;
-export let maxTimePowerupsPerLevel = 2;
+// powerup.js
 
-// Correct order of declarations
-export const bulletImageRed = new Image();
-bulletImageRed.src = "./sprites/laserRed01.png";
-
-export const bulletImageGreen = new Image();
-bulletImageGreen.src = "./sprites/laserGreen12.png";
-
-export let currentBulletImage = bulletImageRed;
-
-// Update bullet image
-export function setBulletImg(upgraded) {
-  currentBulletImage = upgraded ? bulletImageGreen : bulletImageRed;
-}
-
-export let timePowerup = {
-  x: 0,
-  y: -50,
-  width: 32,
-  height: 32,
-  image: new Image(),
-  active: false,
-  spawnTime: Date.now() + 20000 + Math.random() * 15000 
-};
-
-export let powerup = {
-  x: 0,
-  y: -50,
-  width: 32,
-  height: 32,
-  image: new Image(),
-  active: false,
-  spawnTime: Date.now() + 10000 + Math.random() * 10000
-};
-
-powerup.image.src = "./sprites/powerupBlue_bolt.png";
+import * as audio from './audio.js';
+import { setBulletImg } from './Bullets.js';
 
 export let upgraded = false;
 export let upgradeEndTime = 0;
 
-// Spawn and draw powerup
-export function drawPowerup(ctx, canvas, player, ammo, maxAmmo, updateAmmoDisplay, setBulletImg, playShieldUp) {
+let powerup = {
+  x: 0, y: -50, width: 32, height: 32, image: new Image(), active: false, spawnTime: 0
+};
+powerup.image.src = "./sprites/powerupBlue_bolt.png";
+
+export let timePowerup = {
+  x: 0, y: -50, width: 32, height: 32, image: new Image(), active: false, spawnTime: 0
+};
+timePowerup.image.src = "./sprites/powerupGreen_star.png";
+
+// Must be called at game start
+export function initPowerups(canvasWidth, hudState) {
+  hudState.timePowerupsSpawned = 0;
+  powerup.spawnTime = Date.now() + 10000 + Math.random() * 10000;
+  powerup.x = Math.random() * (canvasWidth - powerup.width);
+
+  timePowerup.spawnTime = Date.now() + 20000 + Math.random() * 15000;
+  timePowerup.x = Math.random() * (canvasWidth - timePowerup.width);
+}
+
+export function drawPowerup(ctx, canvas, player, ammoState, updateAmmoDisplay) {
   const now = Date.now();
 
-  // Spawn if time passed and not active
   if (now > powerup.spawnTime && !powerup.active) {
     powerup.x = Math.random() * (canvas.width - powerup.width);
     powerup.y = -50;
@@ -55,7 +39,6 @@ export function drawPowerup(ctx, canvas, player, ammo, maxAmmo, updateAmmoDispla
     powerup.y += 2;
     ctx.drawImage(powerup.image, powerup.x, powerup.y, powerup.width, powerup.height);
 
-    // Collision with player
     if (
       player.x < powerup.x + powerup.width &&
       player.x + player.width > powerup.x &&
@@ -63,52 +46,49 @@ export function drawPowerup(ctx, canvas, player, ammo, maxAmmo, updateAmmoDispla
       player.y + player.height > powerup.y
     ) {
       powerup.active = false;
-
-      // Apply powerup effect
       upgraded = true;
-      upgradeEndTime = Date.now() + 10000;
-      ammo = Math.min(ammo + 200, maxAmmo);
+      upgradeEndTime = now + 10000;
+
+      ammoState.ammo = Math.min(ammoState.ammo + 200, ammoState.maxAmmo);
       updateAmmoDisplay();
       setBulletImg(true);
-      playShieldUp();
+      audio.playShieldUp();
 
-      // 🔁 Set next spawn time (15–25 seconds later)
-      powerup.spawnTime = now + 15000 + Math.random() * 10000;
+      powerup.spawnTime = now + 10000 + Math.random() * 10000;
     }
 
-    // Despawn if off screen
     if (powerup.y > canvas.height) {
       powerup.active = false;
-
-      // 🔁 Set next spawn time (if missed)
-      powerup.spawnTime = now + 15000 + Math.random() * 10000;
+      powerup.spawnTime = now + 10000 + Math.random() * 10000;
     }
   }
 }
 
-export function drawTimePowerup(ctx, canvas, player, timeLeft, updateHealthBar, updatePlayerImage, playShieldUp) {
+export function updatePowerupState(now) {
+  if (upgraded && now >= upgradeEndTime) {
+    upgraded = false;
+    setBulletImg(false); // Set back to bulletImageRed
+  }
+}
+
+export function drawTimePowerup(ctx, canvas, player, updateHealthBar, updatePlayerImage, hudState) {
   const now = Date.now();
 
-  // Only spawn if:
-  // - Time to spawn has passed
-  // - Powerup isn't active
-  // - Fewer than the max allowed have spawned this level
   if (
     now > timePowerup.spawnTime &&
     !timePowerup.active &&
-    timePowerupsSpawned < maxTimePowerupsPerLevel
+    hudState.timePowerupsSpawned < hudState.maxTimePowerupsPerLevel
   ) {
     timePowerup.x = Math.random() * (canvas.width - timePowerup.width);
     timePowerup.y = -50;
     timePowerup.active = true;
-    timePowerupsSpawned++;
+    hudState.timePowerupsSpawned++;
   }
 
   if (timePowerup.active) {
     timePowerup.y += 4;
     ctx.drawImage(timePowerup.image, timePowerup.x, timePowerup.y, timePowerup.width, timePowerup.height);
 
-    // Collision with player
     if (
       player.x < timePowerup.x + timePowerup.width &&
       player.x + player.width > timePowerup.x &&
@@ -116,72 +96,23 @@ export function drawTimePowerup(ctx, canvas, player, timeLeft, updateHealthBar, 
       player.y + player.height > timePowerup.y
     ) {
       timePowerup.active = false;
-      timeLeft += 25;
-      if (timeLeft > 999) timeLeft = 999;
-
+      hudState.timeLeft = Math.min(hudState.timeLeft + 25, 999);
       player.hp = Math.min(player.hp + 4, 20);
-       updateHealthBar();      // Updates HUD
-       updatePlayerImage(); 
+      updateHealthBar();
+      updatePlayerImage(player);
 
       const timerDisplay = document.getElementById("timerText");
-      timerDisplay.innerText = `Time: ${timeLeft}`;
+      timerDisplay.innerText = `Time: ${hudState.timeLeft}`;
       timerDisplay.classList.add("flash");
       setTimeout(() => timerDisplay.classList.remove("flash"), 3000);
 
-      playShieldUp();
-
-      // Set a new delayed spawn time (no back-to-back spawn)
-      timePowerup.spawnTime = now + 15000 + Math.random() * 10000; // 15–25 sec delay
+      audio.playShieldUp();
+      timePowerup.spawnTime = now + 10000 + Math.random() * 10000;
     }
 
-    // Despawn if off screen
     if (timePowerup.y > canvas.height) {
       timePowerup.active = false;
-      // Set delayed spawn time even if missed
-      timePowerup.spawnTime = now + 15000 + Math.random() * 10000;
+      timePowerup.spawnTime = now + 10000 + Math.random() * 10000;
     }
   }
 }
-
-document.addEventListener('keydown', e => {
-  keys[e.code] = true;
-
-  if (e.code === "Space" && ammo > 0) {
-    if (upgraded) {
-      bullets.push({ x: player.x + player.width / 2 - 15, y: player.y, width: 10, height: 20, speed: 8 });
-      bullets.push({ x: player.x + player.width / 2 + 5, y: player.y, width: 10, height: 20, speed: 8 });
-      ammo -= 2;
-    } else {
-      bullets.push({ x: player.x + player.width / 2 - 5, y: player.y, width: 10, height: 20, speed: 8 });
-      ammo--;
-    }
-
-    playLaser();
-    updateAmmoDisplay();
-  }
-});
-
-document.addEventListener('keyup', e => {
-  keys[e.code] = false;
-});
-
-
-export function drawBullets(ctx, bullets, canvas, player, ammo, maxAmmo, updateAmmoDisplay, setBulletImg, playShieldUp) {
-       if (!Array.isArray(bullets)) {
-    console.error('bullets is not an array:', bullets);
-    return;
-  }
-
-  bullets.forEach((b, i) => {
-    b.y -= b.speed;
-    ctx.drawImage(currentBulletImage, b.x, b.y, b.width, b.height);
-    if (b.y < 0) bullets.splice(i, 1);
-  });
-}
-export function checkUpgradeTimeout() {
-  if (upgraded && Date.now() > upgradeEndTime) {
-    upgraded = false;
-    setBulletImg(false); // switch to default bullet
-  }
-}
-
