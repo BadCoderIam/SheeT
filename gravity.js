@@ -1,10 +1,11 @@
-   import { playerImg, playerImagesByHP, updatePlayerImage, player } from './playerimg.js';
+   import { playerImg, player } from './playerimg.js';
    import * as audio from './audio.js';
+   import { getLevel } from './state.js';
 
    
    export function applyGravityPull(canvas, player, level, updateHealthBar, updatePlayerImage, playShieldDown, shakeTimerSetter) {
-  const centerX = canvas.width / 2;
-  const centerY = canvas.height / 2;
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
 
   if (level === 3 || level === 6) {
   const dx = centerX - (player.x + player.width / 2);

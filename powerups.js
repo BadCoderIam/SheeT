@@ -1,23 +1,16 @@
 // powerup.js
 
 import * as audio from './audio.js';
-import { setBulletImg } from './Bullets.js';
-
+import { bullets, bulletImg, upgradedBulletImg, enemyBullets, enemyBulletImg, bulletImageRed, bulletImageGreen, currentBulletImage, setBulletImg, updateAmmoDisplay } from './Bullets.js';
+import { baseHp,  getAmmo, setAmmo, maxAmmo, level, timeLeft, timerInterval, timePowerupsSpawned, canvas, ctx, timePowerup, powerup, hudState } from './state.js';
+import { player } from './playerimg.js';
+import { updateScore, updateHealthBar, maxHP } from './UI.js';
 export let upgraded = false;
 export let upgradeEndTime = 0;
 
-let powerup = {
-  x: 0, y: -50, width: 32, height: 32, image: new Image(), active: false, spawnTime: 0
-};
-powerup.image.src = "./sprites/powerupBlue_bolt.png";
-
-export let timePowerup = {
-  x: 0, y: -50, width: 32, height: 32, image: new Image(), active: false, spawnTime: 0
-};
-timePowerup.image.src = "./sprites/powerupGreen_star.png";
 
 // Must be called at game start
-export function initPowerups(canvasWidth, hudState) {
+export function initPowerups(canvas, ctx, canvasWidth, hudState) {
   hudState.timePowerupsSpawned = 0;
   powerup.spawnTime = Date.now() + 10000 + Math.random() * 10000;
   powerup.x = Math.random() * (canvasWidth - powerup.width);
@@ -26,7 +19,7 @@ export function initPowerups(canvasWidth, hudState) {
   timePowerup.x = Math.random() * (canvasWidth - timePowerup.width);
 }
 
-export function drawPowerup(ctx, canvas, player, updateAmmoDisplay, ammo, maxAmmo) {
+export function drawPowerup(ctx, canvas, player) {
   const now = Date.now();
 
   if (now > powerup.spawnTime && !powerup.active) {
@@ -37,8 +30,9 @@ export function drawPowerup(ctx, canvas, player, updateAmmoDisplay, ammo, maxAmm
 
   if (powerup.active) {
     powerup.y += 2;
+    if (powerup.image) {
     ctx.drawImage(powerup.image, powerup.x, powerup.y, powerup.width, powerup.height);
-
+    }
     if (
       player.x < powerup.x + powerup.width &&
       player.x + player.width > powerup.x &&
@@ -49,8 +43,9 @@ export function drawPowerup(ctx, canvas, player, updateAmmoDisplay, ammo, maxAmm
       upgraded = true;
       upgradeEndTime = now + 10000;
 
-      ammo = Math.min(ammo + 200, maxAmmo);
+      setAmmo(Math.min(getAmmo() + 200, maxAmmo));
       setBulletImg(true);
+      updateAmmoDisplay();
       audio.playShieldUp();
 
       powerup.spawnTime = now + 10000 + Math.random() * 10000;
@@ -63,6 +58,13 @@ export function drawPowerup(ctx, canvas, player, updateAmmoDisplay, ammo, maxAmm
   }
 }
 
+export function checkUpgradeTimeout() {
+  if (upgraded && Date.now() > upgradeEndTime) {
+    upgraded = false;
+    setBulletImg(false); // switch to default bullet
+  }
+}
+
 export function updatePowerupState(now) {
   if (upgraded && now >= upgradeEndTime) {
     upgraded = false;
@@ -70,7 +72,8 @@ export function updatePowerupState(now) {
   }
 }
 
-export function drawTimePowerup(ctx, canvas, player, updateHealthBar, updatePlayerImage, hudState) {
+export function drawTimePowerup(options) {
+  const { ctx, canvas, player, level, updateHealthBar, audio, hudState, timePowerup, maxHP } = options;
   const now = Date.now();
 
   if (
@@ -86,8 +89,9 @@ export function drawTimePowerup(ctx, canvas, player, updateHealthBar, updatePlay
 
   if (timePowerup.active) {
     timePowerup.y += 4;
+    if (timePowerup.image) {
     ctx.drawImage(timePowerup.image, timePowerup.x, timePowerup.y, timePowerup.width, timePowerup.height);
-
+    }
     if (
       player.x < timePowerup.x + timePowerup.width &&
       player.x + player.width > timePowerup.x &&
@@ -97,8 +101,7 @@ export function drawTimePowerup(ctx, canvas, player, updateHealthBar, updatePlay
       timePowerup.active = false;
       hudState.timeLeft = Math.min(hudState.timeLeft + 25, 999);
       player.hp = Math.min(player.hp + 4, 20);
-      updateHealthBar();
-      updatePlayerImage(player);
+      updateHealthBar(player, maxHP);
 
       const timerDisplay = document.getElementById("timerText");
       timerDisplay.innerText = `Time: ${hudState.timeLeft}`;

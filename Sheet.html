@@ -175,17 +175,16 @@
     <div id="game-container" style="transform: scale(1.2); display: flex; flex-direction: column; align-items: center;">
         <div>
             <div id="slot" style="
-                font-size: 5rem; 
-                height: 200px; 
-                width: 200px; 
-                display: flex; 
-                align-items: center; 
-                justify-content: center; 
-                border: 5px solid rgba(139, 69, 19, 1); 
-                border-radius: 15px; 
-                background: url('https://images.wallpapersden.com/image/download/black-hole-hd-art_bWZmbGyUmZqaraWkpJRobWllrWdma2U.jpg') center/cover no-repeat;">
-                <!-- Start image -->
-            </div>
+    font-size: 5rem; 
+    height: 200px; 
+    width: 200px; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    border: 5px solid rgba(139, 69, 19, 1); 
+    border-radius: 15px; 
+    background: transparent;">
+</div>
         </div>
         <button id="spin-button" style="
             padding: 0.8rem 2rem; 
@@ -263,105 +262,105 @@
 </style>
 
 <script>
-    const spinButton = document.getElementById('spin-button');
-    const claimButton = document.getElementById('claim-button');
-    const slot = document.getElementById('slot');
-    const result = document.getElementById('result');
+const spinButton = document.getElementById('spin-button');
+const claimButton = document.getElementById('claim-button');
+const slot = document.getElementById('slot');
+const result = document.getElementById('result');
 
-    const symbols = ['🍒', '🍋', '🍊', '⭐', '🔔', '🎲', '💎'];
-    let isSpinning = false;
+const shipVariants = [
+  { color: 'red', rarity: 'Common', weight: 10 },
+  { color: 'green', rarity: 'Uncommon', weight: 6 },
+  { color: 'blue', rarity: 'Rare', weight: 3 },
+  { color: 'orange', rarity: 'Epic', weight: 1 }
+];
 
-    function resetSlotBorder() {
-        slot.style.borderColor = 'rgba(139, 69, 19, 1)';
-        slot.style.boxShadow = 'none';
-        slot.style.animation = 'none';
+const ships = [];
+
+// Build weighted ship array for spinning
+shipVariants.forEach(variant => {
+  for (let i = 0; i < variant.weight; i++) {
+    ships.push({
+      image: `./Sprites/playerShip1_${variant.color}.png`,
+      rarity: variant.rarity,
+      color: variant.color
+    });
+  }
+});
+
+let isSpinning = false;
+let selectedShip = null;
+
+function resetSlotBorder() {
+  slot.style.borderColor = 'rgba(139, 69, 19, 1)';
+  slot.style.boxShadow = 'none';
+  slot.style.animation = 'none';
+}
+
+function setStartingImage() {
+  slot.style.backgroundColor = 'transparent';
+  slot.innerHTML = ''; 
+  resetSlotBorder();
+}
+
+function getRandomShip() {
+  return ships[Math.floor(Math.random() * ships.length)];
+}
+
+function determineResult(finalShip) {
+  result.innerHTML = `🎉 You got a <strong style="color:${finalShip.color}">${finalShip.rarity}</strong> ship!`;
+  slot.style.borderColor = 'gold';
+  slot.style.animation = 'strobe-gold 1s infinite, breathe 2s infinite';
+  claimButton.style.display = 'block';
+  selectedShip = finalShip;
+
+  slot.innerHTML = `<img src="${finalShip.image}" style="width:80px;height:auto;">`;
+}
+
+function spinSlotMachine() {
+  if (isSpinning) return;
+
+  isSpinning = true;
+  spinButton.disabled = true;
+  spinButton.style.opacity = 0.5;
+
+  claimButton.style.display = 'none';
+  result.textContent = '';
+  resetSlotBorder();
+
+  let spinCount = 0;
+  const maxSpins = 50;
+  const interval = setInterval(() => {
+    const randomShip = getRandomShip();
+    slot.innerHTML = `<img src="${randomShip.image}" style="width:80px;height:auto;">`;
+    spinCount++;
+
+    if (spinCount >= maxSpins) {
+      clearInterval(interval);
+      const finalShip = getRandomShip();
+      determineResult(finalShip);
+      isSpinning = false;
+      spinButton.disabled = false;
+      spinButton.style.opacity = 1;
     }
+  }, 50);
+}
 
-    function setStartingImage() {
-        slot.style.backgroundImage = "url('https://images.wallpapersden.com/image/download/black-hole-hd-art_bWZmbGyUmZqaraWkpJRobWllrWdma2U.jpg')";
-        slot.textContent = '';
-        slot.style.color = 'transparent';
-        resetSlotBorder();
-    }
+claimButton.addEventListener('click', () => {
+  if (selectedShip) {
+    startGameWithShip(selectedShip.image);
+  }
+});
 
-    function getRandomSymbol() {
-        const weightedSymbols = [
-            '🍒', '🍒', '🍒', '🍒', '🍒',
-            '🍋', '🍋', '🍋', '🍋', '🍋',
-            '🍊', '🍊', '🍊', '🍊', '🍊',
-            '🔔', '🔔', '🔔', '🔔', '🔔',
-            '🎲', '🎲', '🎲', '🎲', '🎲',
-            '⭐', '💎' // Winners have lower weight
-        ];
-        const randomIndex = Math.floor(Math.random() * weightedSymbols.length);
-        return weightedSymbols[randomIndex];
-    }
+function startGameWithShip(shipImageSrc) {
+  console.log("Starting game with ship:", shipImageSrc);
+  spawnPlayer(shipImageSrc, () => {
+    updateBackground();
+    document.getElementById('startScreen').style.display = 'none';
+  });
+}
 
-    function determineResult(finalSymbol) {
-        const outcomes = {
-            '⭐': { message: '🎉 Jackpot! You win!', isWinner: true },
-            '💎': { message: '💎 Diamond Treasure! You win!', isWinner: true },
-            '🍒': { message: '😞 Try again!', isWinner: false },
-            '🍋': { message: '😞 Try again!', isWinner: false },
-            '🍊': { message: '😞 Try again!', isWinner: false },
-            '🔔': { message: '😞 Try again!', isWinner: false },
-            '🎲': { message: '😞 Try again!', isWinner: false }
-        };
-
-        const outcome = outcomes[finalSymbol];
-        result.textContent = outcome.message;
-	slot.textContent = finalSymbol;
-
-        if (outcome.isWinner) {
-            slot.style.borderColor = 'gold';
-            slot.style.animation = 'strobe-gold 1s infinite, breathe 2s infinite';
-            claimButton.style.display = 'block';
-        } else {
-            slot.style.borderColor = 'red';
-            slot.style.animation = 'strobe-red 1s infinite';
-            setTimeout(() => {
-                slot.style.borderColor = 'darkorange';
-                setStartingImage();
-            }, 10000); // Delay before showing the starting image
-        }
-    }
-
-    function spinSlotMachine() {
-        if (isSpinning) return;
-
-        isSpinning = true;
-        spinButton.disabled = true;
-        spinButton.style.opacity = 0.5;
-
-        claimButton.style.display = 'none';
-        result.textContent = '';
-        resetSlotBorder();
-
-        slot.style.color = '#fff';
-        slot.style.backgroundImage = ''; // Clear starting image
-
-        let spinCount = 0;
-        const maxSpins = 50; // Number of spins before stopping
-        const interval = setInterval(() => {
-            const currentSymbol = symbols[spinCount % symbols.length];
-            slot.textContent = currentSymbol;
-            spinCount++;
-
-            // Stop spinning after maxSpins
-            if (spinCount >= maxSpins) {
-                clearInterval(interval);
-                const randomSymbol = getRandomSymbol(); // Adjusted odds
-                determineResult(randomSymbol);
-                isSpinning = false;
-                spinButton.disabled = false;
-                spinButton.style.opacity = 1;
-            }
-        }, 50);
-    }
-
-    spinButton.addEventListener('click', spinSlotMachine);
-
-    setStartingImage(); // Initialize game with starting image
+spinButton.addEventListener('click', spinSlotMachine);
+setStartingImage();
 </script>
 </body>
 </html>

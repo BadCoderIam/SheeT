@@ -5,11 +5,46 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SheeTY Abyss</title>
   <link rel="stylesheet" href="style.css" />
+  <style>
+    #slot {
+      height: 150px;
+      width: 150px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 5px solid rgba(139, 69, 19, 1);
+      border-radius: 15px;
+      background-color: transparent;
+      margin-bottom: 0.5rem;
+    }
+    #spin-button, #claim-button {
+      padding: 0.4rem 0.8rem;
+      font-size: 1rem;
+      margin: 0.2rem;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+    }
+    #spin-button { background-color: #444; color: #fff; }
+    #claim-button { background-color: gold; color: #222; display: none; }
+    #result {
+      margin-top: 0.5rem;
+      font-size: 1rem;
+      text-align: center;
+    }
+  </style>
 </head>
 <body>
   <div id="startScreen">
-    <h1>SheeTy Abyss</h1>
-    <button id="startButton">Start SheeT</button>
+  <h1>SheeTy Abyss</h1>
+
+  <div id="slot"></div>
+  <button id="spin-button">Spin for Ship</button>
+  <button id="claim-button" style="display:none;">Claim Ship</button>
+  <div id="result"></div>
+
+  <button id="startButton" style="display:none;">Start Game</button>
+
     <div id="legend">
       <h3>Legend</h3>
       <div class="legend-item"><span class="icon">🛡️</span> = Player Life</div>
@@ -36,7 +71,7 @@
   <div id="ammoDisplay">🔫 Ammo: 500</div>
   <canvas id="gameCanvas"></canvas>
 
-  <script type="module" src="game.js"></script>
-  <script type="module" src="engine.js"></script>
-</body>
+  <script type="module" src="./shipSelector.js"></script>
+  <script type="module" src="./engine.js"></script>
+  </body>
 </html>

@@ -1,5 +1,5 @@
 import * as audio from './audio.js';
-
+import { getAmmo } from './state.js';
 
 export const bullets = [];
 
@@ -12,13 +12,13 @@ export const bullets = [];
 
     export const enemyBullets = [];
 export const enemyBulletImg = new Image();
-enemyBulletImg.src = "./sprites/laserGreen12.png";
+enemyBulletImg.src = "./Sprites/laserGreen12.png";
 
 export const bulletImageRed = new Image();
-bulletImageRed.src = "./sprites/laserRed01.png";
+bulletImageRed.src = "./Sprites/laserRed01.png";
 
 export const bulletImageGreen = new Image();
-bulletImageGreen.src = "./sprites/laserGreen12.png";
+bulletImageGreen.src = "./Sprites/laserGreen12.png";
 
 export let currentBulletImage = bulletImageRed; 
 
@@ -27,16 +27,23 @@ export function setBulletImg(upgraded) {
     currentBulletImage = upgraded ? bulletImageGreen : bulletImageRed;
 }
 
-export function drawBullets(ctx, upgraded) {
-  bullets.forEach((b, i) => {
+export function drawBullets(ctx, bullets, bulletImg, upgradedBulletImg, upgraded) {
+  for (let i = bullets.length - 1; i >= 0; i--) {
+    const b = bullets[i];
     b.y -= b.speed;
+
     const img = upgraded ? upgradedBulletImg : bulletImg;
-    ctx.drawImage(currentBulletImage, b.x, b.y, b.width, b.height);
+    ctx.drawImage(img, b.x, b.y, b.width, b.height);
+
     if (b.y < 0) bullets.splice(i, 1);
-  });
+  }
 }
 
-    export function drawEnemyBullets(ctx, player, canvas, shakeTimer, updateHealthBar, updatePlayerImage, gameOver, score, highScore, level) {
+   export function updateAmmoDisplay(ammo) {
+    document.getElementById('ammoDisplay').innerText = `🔫 Ammo: ${getAmmo()}`;
+}
+
+    export function drawEnemyBullets() {
   for (let i = enemyBullets.length - 1; i >= 0; i--) {
     const b = enemyBullets[i];
     b.x += b.vx;
@@ -57,10 +64,10 @@ export function drawBullets(ctx, upgraded) {
       audio.playShieldDown();
 
       if (player.hp <= 0) {
-        gameOver = true;
-        timerDisplay.classList.remove("pulsing");
-        document.getElementById("startScreen").style.display = "flex";
-        document.getElementById("startScreen").innerHTML = `<h1>Game Over! You Died SheeTy!!</h1><p>Score: ${score}</p><p>High Score: ${highScore}</p><p>Level: ${level}</p><button onclick="location.reload()">Restart</button>`;
+              setGameOver(true);
+              timerDisplay.classList.remove("pulsing");
+              document.getElementById("startScreen").style.display = "flex";
+              document.getElementById("startScreen").innerHTML = `<h1>Game Over! You Died SheeTy!!</h1><p>Score: ${getScore()}</p><p>High Score: ${getHighScore()}</p><p>Level: ${getLevel()}</p><button onclick="location.reload()">Restart</button>`;
       }
     }
 

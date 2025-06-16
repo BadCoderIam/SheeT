@@ -3,6 +3,8 @@
 import { getScore, getHighScore } from './meteors.js';
 import { updateBackground } from './levels.js';
 
+export const maxHP = 20;
+export const maxBarWidth = 300;
 
 export function updateScore(
   levelRef,
@@ -50,4 +52,29 @@ export function updateScore(
 
   document.getElementById("scoreDisplay").innerText =
     `Score: ${score} | High Score: ${highScore} | Level: ${currentLevel}`;
+}
+
+export function updateHealthBar(player, maxHP, maxBarWidth) {
+  const bar = document.getElementById('healthBar');
+  const container = document.getElementById('healthBarContainer');
+  const percent = Math.max(0, player.hp / maxHP);
+
+  // Update fill bar
+  const fillWidth = percent * (maxBarWidth - 10); // subtract padding/margin if needed
+  bar.style.width = fillWidth + "px";
+
+  // Update border container width
+  const containerWidth = Math.max(percent * maxBarWidth, 50);
+  container.style.width = containerWidth + "px";
+
+  // Color logic
+  let barColor = "#00ff00";
+  if (percent <= 0.35) {
+    const strobe = Math.floor(Date.now() / 100) % 2 === 0;
+    barColor = strobe ? "#ff0000" : "#880000";
+  } else if (percent <= 0.7) {
+    barColor = "#ffa500";
+  }
+
+  bar.style.backgroundColor = barColor;
 }

@@ -1,9 +1,9 @@
 // Updated meteors.js
 
-import { player, updatePlayerImage } from './playerimg.js';
+import { player } from './playerimg.js';
 import { bullets, enemyBullets } from './Bullets.js';
 import * as audio from './audio.js';
-import { baseHp } from './state.js';
+import { baseHp, canvas, ctx } from './state.js';
 
 
 let sharedLevelRef = { value: 1 };
@@ -12,14 +12,13 @@ export function setMeteorLevelRef(ref) {
   levelRef = ref;
 }
 
+
 export function setLevelRef(ref) {
   sharedLevelRef = ref;
 }
 
 let score = 0;
 let highScore = 0;
-const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d");
 
 const meteors = [];
 
@@ -60,7 +59,7 @@ const meteorHPByImage = {
 };
 
 let gameStarted = false;
-let hp = baseHp + (levelRef.value - 1);
+
 
 export function setMeteorState(_level, _started, _score, _highScore) {
   level = _level;
