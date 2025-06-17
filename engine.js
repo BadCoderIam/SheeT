@@ -4,9 +4,10 @@ import { applyGravityPull } from './gravity.js';
 import { updateBackground } from './levels.js';
 import { getSelectedShip, selectedShip } from './shipSelector.js';
 import { updateScore, updateHealthBar, maxBarWidth, maxHP } from './UI.js';
-import { baseHp, handleMovement, getAmmo, setAmmo, maxAmmo, ammo, canvas, ctx, level, levelRef, getLevel, setLevel, getTimeLeft, setTimeLeft, timePowerupsSpawned, timePowerup, powerup, hudState } from './state.js';
+import { baseHp, handleMovement, getAmmo, setAmmo, maxAmmo, ammo, canvas, ctx, backgroundMusic, level, levelRef, getLevel, setLevel, getTimeLeft, setTimeLeft, timePowerupsSpawned, timePowerup, powerup, hudState } from './state.js';
 import { playerImg, player, setPlayerShipImage } from './playerimg.js';
 import * as audio from './audio.js';
+import { playBackgroundMusic } from './audio.js';
 import { drawPowerup, drawTimePowerup, initPowerups, updatePowerupState, upgraded, upgradeEndTime, checkUpgradeTimeout } from './powerups.js';
 import { bullets, bulletImg, upgradedBulletImg, enemyBullets, enemyBulletImg, bulletImageRed, bulletImageGreen, currentBulletImage, setBulletImg, updateAmmoDisplay } from './Bullets.js';
 import {
@@ -219,7 +220,7 @@ updateScore(
       getLevel();
       drawBoss();
       applyGravityPull(canvas, player, levelRef, updateHealthBar, audio.playShieldDown, val => shakeTimer = val);
-      drawEnemyBullets();
+      drawEnemyBullets(ctx, canvas, player);
 requestAnimationFrame(gameLoop);
     }
 function drawHealthBar() {
@@ -308,13 +309,14 @@ startButton.addEventListener('click', () => {
     playerImg.onload = () => {
       document.getElementById("startScreen").style.display = "none";
       gameStarted = true;
+      playBackgroundMusic();
 
       updateBackground(level);
       updateScore(
         level,
         maxLevel,
         { value: boss },
-        () => { gameOver = true; timerDisplay.classList.remove("pulsing"); },
+        () => { gameOver = true; timerDisplay.classList.remove("pulsing"); stopBackgroundMusic(); },
         updateBackground,
         { value: timePowerupsSpawned },
         timePowerup,
@@ -362,6 +364,7 @@ if (getTimeLeft() <= 15) {
     if (getTimeLeft() <= 0) {
       clearInterval(timerInterval);
       gameOver = true;
+      stopBackgroundMusic();
       timerDisplay.classList.remove("pulsing");
       document.getElementById("startScreen").style.display = "flex";
       document.getElementById("startScreen").innerHTML = `<h1>Time's Up Piece of SHeeT! Game Over!</h1><p>Score: ${score}</p><p>High Score: ${highScore}</p><p>Level: ${level}</p><button onclick="location.reload()">Restart</button>`;
@@ -555,7 +558,7 @@ gameLoop = function () {
 
 
 
-function drawEnemyBullets() {
+function drawEnemyBullets(ctx, canvas, player) {
   for (let i = enemyBullets.length - 1; i >= 0; i--) {
     const b = enemyBullets[i];
     b.x += b.vx;
@@ -572,11 +575,11 @@ function drawEnemyBullets() {
       enemyBullets.splice(i, 1);
       player.hp--;
       shakeTimer = 120;
-      setPlayerShipImage();
       audio.playShieldDown();
 
       if (player.hp <= 0) {
         gameOver = true;
+        stopBackgroundMusic();
         timerDisplay.classList.remove("pulsing");
         document.getElementById("startScreen").style.display = "flex";
         document.getElementById("startScreen").innerHTML = `<h1>Game Over! You Died SheeTy!!</h1><p>Score: ${score}</p><p>High Score: ${highScore}</p><p>Level: ${level}</p><button onclick="location.reload()">Restart</button>`;

@@ -1,6 +1,7 @@
-import { updateScore } from './UI.js';
+import { getLevel } from './state.js';
 
-export function updateBackground(level) {
+export function updateBackground() {
+  const level = getLevel();
   let bg = "./levels/background1.gif";
 
   if (level >= 6) bg = "./levels/background3.gif";

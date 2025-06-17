@@ -3,7 +3,8 @@
    import { getLevel } from './state.js';
 
    
-   export function applyGravityPull(canvas, player, level, updateHealthBar, updatePlayerImage, playShieldDown, shakeTimerSetter) {
+   export function applyGravityPull(canvas, player, updateHealthBar, updatePlayerImage, playShieldDown, shakeTimerSetter) {
+    const level = getLevel();
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
 
@@ -53,8 +54,7 @@
 
       if (now - player.lastGravityDamage >= 1000) {
         player.hp = Math.max(0, player.hp - 1);
-        updateHealthBar();
-        updatePlayerImage(player);
+        updateHealthBar(player, maxHP);
         audio.playShieldDown();
         player.lastGravityDamage = now;
 
@@ -116,8 +116,7 @@
 
     if (now - player.lastGravityDamage >= burnDamageRate) {
       player.hp = Math.max(0, player.hp - 1);
-      updateHealthBar();
-      updatePlayerImage(player);
+      updateHealthBar(player, maxHP);
       audio.playShieldDown();
       player.lastGravityDamage = now;
 
@@ -135,3 +134,8 @@
     player.yVelocity = 0;
   }
 }
+
+
+
+
+

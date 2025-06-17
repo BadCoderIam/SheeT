@@ -56,6 +56,8 @@ export let timerInterval = null;
 export let timePowerupsSpawned = 0;
 export let maxTimePowerupsPerLevel = 2; // Change as needed
 export let level = 1;
+export let backgroundMusic = null;
+export let bulletUpgrade = "normal"; // "normal", "double", or "triple"
 export const levelRef = { value: level };
 
 export function setLevel(value) {
@@ -76,6 +78,16 @@ export function setAmmo(value) {
 export function getAmmo() {
   return ammo;
 }
+export function getPlayerImageSrc() {
+  return playerImg.src;
+}
+
+export function stopBackgroundMusic() {
+  if (backgroundMusic) {
+    backgroundMusic.pause();
+    backgroundMusic.currentTime = 0; // Reset to start if needed
+  }
+}
 let keys = {};
 
 document.addEventListener('keyup', e => {
@@ -87,13 +99,17 @@ document.addEventListener('keydown', e => {
 
   if (e.code === "Space" && getAmmo() > 0) {
     if (upgraded) {
-      bullets.push({ x: player.x + player.width / 2 - 15, y: player.y, width: 10, height: 20, speed: 8 });
-      bullets.push({ x: player.x + player.width / 2 + 5, y: player.y, width: 10, height: 20, speed: 8 });
-      setAmmo(getAmmo() - 2);
-    } else {
-      bullets.push({ x: player.x + player.width / 2 - 5, y: player.y, width: 10, height: 20, speed: 8 });
-      setAmmo(getAmmo() - 1);
-    }
+      const centerX = player.x + player.width / 2;
+
+    bullets.push({ x: centerX - 15, y: player.y, width: 10, height: 20, speed: 8 }); // Left
+    // bullets.push({ x: centerX - 0,  y: player.y, width: 10, height: 20, speed: 8 }); // Center
+    bullets.push({ x: centerX + 15, y: player.y, width: 10, height: 20, speed: 8 }); // Right
+
+    setAmmo(getAmmo() - 3);
+  } else {
+    bullets.push({ x: player.x + player.width / 2 - 5, y: player.y, width: 10, height: 20, speed: 8 });
+    setAmmo(getAmmo() - 1);
+  }
 
     audio.playLaser();
     updateAmmoDisplay(ammo);

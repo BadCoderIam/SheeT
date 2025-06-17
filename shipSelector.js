@@ -12,7 +12,8 @@ const rarities = [
   { color: 'red', rarity: 'Common', weight: 10 },
   { color: 'green', rarity: 'Uncommon', weight: 6 },
   { color: 'blue', rarity: 'Rare', weight: 3 },
-  { color: 'orange', rarity: 'Epic', weight: 1 }
+  { color: 'orange', rarity: 'Epic', weight: 1 },
+  { color: 'purple', rarity: 'SHEET', weight: 1 }
 ];
 
 const ships = [];
