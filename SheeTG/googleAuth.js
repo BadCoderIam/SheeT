@@ -1,6 +1,6 @@
 // googleAuth.js
-import { claimedShip } from './shipSelector.js';
-import { setClaimedShip } from './shipSelector.js';
+import { claimedShip } from '/shipSelector.js';
+import { setClaimedShip } from '/shipSelector.js';
 
 let currentUser = null;
 // ✅ Create an object to hold it by reference

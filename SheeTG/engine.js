@@ -1,16 +1,16 @@
 // engine.js (core game logic)
 
-import { applyGravityPull } from './gravity.js';
-import { updateBackground } from './levels.js';
-import { initializeGoogleSignIn, getCurrentUser } from './googleAuth.js';
-import { getSelectedShip, selectedShip } from './shipSelector.js';
-import { updateScore, updateHealthBar, maxBarWidth, maxHP } from './UI.js';
-import { baseHp, handleMovement, getAmmo, setAmmo, maxAmmo, ammo, canvas, ctx, shakeTimer, setShakeTimer, shakeTimerRef, stopBackgroundMusic, level, levelRef, getLevel, setLevel, getTimeLeft, setTimeLeft, timePowerupsSpawned, timePowerup, powerup, hudState } from './state.js';
-import { playerImg, player, setPlayerShipImage } from './playerimg.js';
-import * as audio from './audio.js';
-import { playBackgroundMusic } from './audio.js';
-import { drawPowerup, drawTimePowerup, initPowerups, updatePowerupState, upgraded, upgradeEndTime, checkUpgradeTimeout } from './powerups.js';
-import { bullets, bulletImg, upgradedBulletImg, enemyBullets, enemyBulletImg, bulletImageRed, bulletImageGreen, currentBulletImage, setBulletImg, updateAmmoDisplay } from './Bullets.js';
+import { applyGravityPull } from '/gravity.js';
+import { updateBackground } from '/levels.js';
+import { initializeGoogleSignIn, getCurrentUser } from '/googleAuth.js';
+import { getSelectedShip, selectedShip } from '/shipSelector.js';
+import { updateScore, updateHealthBar, maxBarWidth, maxHP } from '/UI.js';
+import { baseHp, handleMovement, getAmmo, setAmmo, maxAmmo, ammo, canvas, ctx, shakeTimer, setShakeTimer, shakeTimerRef, stopBackgroundMusic, level, levelRef, getLevel, setLevel, getTimeLeft, setTimeLeft, timePowerupsSpawned, timePowerup, powerup, hudState } from '/state.js';
+import { playerImg, player, setPlayerShipImage } from '/playerimg.js';
+import * as audio from '/audio.js';
+import { playBackgroundMusic } from '/audio.js';
+import { drawPowerup, drawTimePowerup, initPowerups, updatePowerupState, upgraded, upgradeEndTime, checkUpgradeTimeout } from '/powerups.js';
+import { bullets, bulletImg, upgradedBulletImg, enemyBullets, enemyBulletImg, bulletImageRed, bulletImageGreen, currentBulletImage, setBulletImg, updateAmmoDisplay } from '/Bullets.js';
 import {
   meteors,
   setMeteorState,

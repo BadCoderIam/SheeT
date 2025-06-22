@@ -1,7 +1,7 @@
-   import { playerImg, player } from './playerimg.js';
-   import * as audio from './audio.js';
-   import { getLevel, setShakeTimer } from './state.js';
-   import { updateHealthBar, maxHP, maxBarWidth } from './UI.js';
+   import { playerImg, player } from '/playerimg.js';
+   import * as audio from '/audio.js';
+   import { getLevel, setShakeTimer } from '/state.js';
+   import { updateHealthBar, maxHP, maxBarWidth } from '/UI.js';
    
    export function applyGravityPull(canvas, player) {
     const level = getLevel();
