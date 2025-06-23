@@ -248,8 +248,14 @@
       © 2024 SheeTHole Enterprises | Explore. Capture. Dominate the Blockchain Universe.
     </footer>
 
-    <script>
-      // Your existing JavaScript remains here...
-    </script>
+     <script src="https://global.transak.com/sdk/v1.1.2/transak.min.js"></script>
+
+<script type="module">
+  import { openTransakWidget } from './src/transak.js';
+
+  document.getElementById('connectWallet').addEventListener('click', () => {
+    openTransakWidget();
+  });
+</script>
   </body>
 </html>
